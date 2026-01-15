@@ -1,0 +1,334 @@
+{
+  "name": "🟢 Nano Banana Image Generation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "generate-scene-images-robust",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -464,
+        -128
+      ],
+      "id": "fafc5941-e050-49c8-8c4d-9aedab6aca56",
+      "name": "Webhook",
+      "webhookId": "8d8a3df9-2264-440e-9084-b4f96094d292"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash-image",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash-image (Nano Banana)"
+        },
+        "prompt": "={{ $('Webhook').item.json.body.imgprompt2 }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        432,
+        -128
+      ],
+      "id": "34d808ff-cd3b-4f86-8d09-88e8422c3869",
+      "name": "Generate image 2",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "jO6VbRjkjpgUONmk",
+          "name": "Gemini Text Generation Chalta Purza"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash-image",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash-image (Nano Banana)"
+        },
+        "prompt": "={{ $('Webhook').item.json.body.imgprompt3 }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        1104,
+        -128
+      ],
+      "id": "8eff37b1-5011-41dc-a19e-431f0f20d16f",
+      "name": "Generate  image 3",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "jO6VbRjkjpgUONmk",
+          "name": "Gemini Text Generation Chalta Purza"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash-image",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash-image (Nano Banana)"
+        },
+        "prompt": "={{ $json.body.imgprompt1 }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -240,
+        -128
+      ],
+      "id": "cb47a0cc-3faf-4d36-9363-8e38012ff434",
+      "name": "Generate  image 1",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "jO6VbRjkjpgUONmk",
+          "name": "Gemini Text Generation Chalta Purza"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({\n  id1: `https://pub-4805fa7fcbc0475a8824e062d1c298ed.r2.dev/${$('Webhook').item.json.body.metadata.drive_folder_id}/${$('Webhook').item.json.body.metadata.scene}_1.png`,\n  id2: `https://pub-4805fa7fcbc0475a8824e062d1c298ed.r2.dev/${$('Webhook').item.json.body.metadata.drive_folder_id}/${$('Webhook').item.json.body.metadata.scene}_2.png`,\n  id3: `https://pub-4805fa7fcbc0475a8824e062d1c298ed.r2.dev/${$('Webhook').item.json.body.metadata.drive_folder_id}/${$('Webhook').item.json.body.metadata.scene}_3.png`\n}) }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1552,
+        -128
+      ],
+      "id": "47600b9a-b38d-41fb-9cf6-fc35a2ed57bf",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "yt-scenes",
+        "fileName": "={{ $('Webhook').item.json.body.metadata.drive_folder_id }}/{{ $('Webhook').item.json.body.metadata.scene }}_1.png",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        -128
+      ],
+      "id": "b6b5f254-1de6-4b7d-a13d-1d01a6cdbe73",
+      "name": "Upload Image 1",
+      "credentials": {
+        "s3": {
+          "id": "2xEMopykliclEARw",
+          "name": "S3 (R2 Cloudfare)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "yt-scenes",
+        "fileName": "={{ $('Webhook').item.json.body.metadata.drive_folder_id }}/{{ $('Webhook').item.json.body.metadata.scene }}_2.png",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [
+        656,
+        -128
+      ],
+      "id": "0a511f1c-db72-4153-91f1-402eab8f17f4",
+      "name": "Upload Image  2",
+      "credentials": {
+        "s3": {
+          "id": "2xEMopykliclEARw",
+          "name": "S3 (R2 Cloudfare)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "yt-scenes",
+        "fileName": "={{ $('Webhook').item.json.body.metadata.drive_folder_id }}/{{ $('Webhook').item.json.body.metadata.scene }}_3.png",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [
+        1328,
+        -128
+      ],
+      "id": "9d782fcf-02a1-482c-96f4-2fc87f4b5894",
+      "name": "Upload Image 3",
+      "credentials": {
+        "s3": {
+          "id": "2xEMopykliclEARw",
+          "name": "S3 (R2 Cloudfare)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        -128
+      ],
+      "id": "ffba0089-0312-42eb-9d90-e38446d3eca0",
+      "name": "Wait",
+      "webhookId": "32926444-95f3-4bf8-aa54-e85167b793ff"
+    },
+    {
+      "parameters": {
+        "amount": 1,
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        -128
+      ],
+      "id": "f7a523cf-4ec2-4786-b9b9-e5ddb09a7d4a",
+      "name": "Wait1",
+      "webhookId": "20b0c56a-632c-44d8-a09b-068bfe68546e"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Generate image 2": {
+      "main": [
+        [
+          {
+            "node": "Upload Image  2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate  image 3": {
+      "main": [
+        [
+          {
+            "node": "Upload Image 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate  image 1": {
+      "main": [
+        [
+          {
+            "node": "Upload Image 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Generate  image 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Image 1": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Image  2": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Image 3": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Generate image 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Generate  image 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "8a46005f-093b-451e-ac0c-6a995d3b8597",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "26999db1e681e6a87364716419329ff310f36bdcdb3a6fae594cdba3a86aed90"
+  },
+  "id": "t4ashFEgsTNLEPhu",
+  "tags": []
+}

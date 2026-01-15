@@ -1,0 +1,2289 @@
+{
+  "name": "YouTube Illustrated Story Factory v4",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "/**\n * ULTRA-ROBUST SCENE PARSER v3.0\n * Merges multiple narration fragments and cleans AI artifacts.\n */\n\nconst rawText = $('Script Writer AI').first().json.output;\nconst GLOBAL_ART_STYLE = \"Cinematic matte painting, emotional atmosphere, visible brushstrokes, impasto texture, warm candlelight glow, ultra-detailed, 8k, Indian setting, volumetric lighting --ar 16:9 --v 6.0\";\n\nif (!rawText || typeof rawText !== 'string') {\n  throw new Error('No story text found in input.');\n}\n\n// 1. Split into Scenes\nconst sceneHeaderRegex = /(?:#+|-+|=+)*\\s*Scene\\s*\\d+[:.*]*/gi;\nconst blocks = rawText.split(sceneHeaderRegex).filter(b => b.trim().length > 20);\n\nconst scenes = [];\nconst totalScenes = blocks.length;\n\nblocks.forEach((block, index) => {\n  // --- NARRATION EXTRACTION (MERGE ALL HINDI TEXT) ---\n  // We grab everything from the start until \"Prompt 1\" or \"Illustration\"\n  let narrationSection = block.split(/Prompt 1|Illustration|प्रोम्प्ट 1/i)[0];\n  \n  // Clean up labels like \"Narration:\", \"रिया:\", \"नीला पेड़:\" but KEEP the actual dialogue\n  let cleanedNarration = narrationSection\n    .replace(/(?:Narration|नैरेशन|न्रेशन|रिया|नीला पेड़|Character)[:\\s*-]*/gi, '')\n    .replace(/\\n+/g, ' ') // Remove line breaks for smoother TTS\n    .trim();\n\n  // --- PROMPT EXTRACTION ---\n  const p1 = block.match(/(?:Prompt 1).*?[:\\s*-]*([\\s\\S]*?)(?=Prompt 2|$)/i);\n  const p2 = block.match(/(?:Prompt 2).*?[:\\s*-]*([\\s\\S]*?)(?=Prompt 3|$)/i);\n  const p3 = block.match(/(?:Prompt 3).*?[:\\s*-]*([\\s\\S]*?)(?=Scene|---|$)/i);\n\n  const clean = (txt) => txt ? txt.replace(/[*_#]/g, '').trim() : \"\";\n\n  if (cleanedNarration.length > 5) {\n    scenes.push({\n      sceneNumber: index + 1,\n      totalScenes,\n      narration: clean(cleanedNarration),\n      prompt1: p1 ? `${clean(p1[1])} -- Style: ${GLOBAL_ART_STYLE}` : \"\",\n      prompt2: p2 ? `${clean(p2[1])} -- Style: ${GLOBAL_ART_STYLE}` : \"\",\n      prompt3: p3 ? `${clean(p3[1])} -- Style: ${GLOBAL_ART_STYLE}` : \"\"\n    });\n  }\n});\n\nreturn scenes.map(scene => ({ json: scene }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1152,
+        2768
+      ],
+      "id": "6d926d12-6a55-4a54-93be-19cdedac8cfb",
+      "name": "Parse Scenes"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write a viral Hindi story based on this Idea: {{ $('Set Variables').item.json.idea }}. You must use the following Character Profile for the main character: {{ $json.output }}.",
+        "options": {
+          "systemMessage": "=You are a master Indian Storyteller for the YouTube channel 'Gurukul Kahaniya'. \nYour style is calm, emotional, and deeply immersive, similar to a wise grandfather narrating a life lesson.\n\n### STRUCTURAL RULES:\n1. Use ONLY English labels: 'Scene [number]', 'Narration', 'Prompt 1', 'Prompt 2', 'Prompt 3'.\n2. The Narration must be in pure Hindi (Devanagari).\n3. The Illustration Prompts must be in English.\n\n### SCRIPTING FLOW:\n- Scene 1 (The Hook): Start with a deep philosophical question or a high-emotion moment.\n- Scene 2 (The Engagement): Within this narration, naturally ask: \"कहानी आगे बढ़ाने से पहले, मुझे कमेंट्स में बताएं की आप यह कहानी किस शहर से सुन रहे हैं?\" (Before moving forward, tell me in the comments which city you are listening from?)\n- Core Story: Use 'Bol-chaal' Hindi. Avoid robotic words. Focus on internal feelings.\n- Inter-character Dialogue: Keep dialogues short and impactful.\n- Ending: Provide a \"Shiksha\" (Moral) that leaves the viewer thinking.\n\n### ILLUSTRATION RULES:\n- Prompts must follow the Character Profile provided.\n- EXACTLY 3 prompts per scene:\n  Prompt 1 (Wide Shot): Setting the atmosphere.\n  Prompt 2 (Action Shot): Character interaction.\n  Prompt 3 (Close-up): High-detail facial emotion (Tears, Joy, Anger).\n\n### NEW STRICT FORMATTING RULES:\n1. Every Scene MUST have exactly ONE 'Narration' label.\n2. Put the Engagement Question (about city/time) INSIDE the Narration block of Scene 2.\n3. DO NOT repeat the word 'Narration:' inside a scene.\n4. If a character speaks, write it as: [Character Name]: \"[Dialogue]\" all within the Narration block.\n\n### Example for Scene 2:\nScene 2\nNarration: जैसे ही रिया ने दरवाज़ा छुआ, उसे ठंडी हवा महसूस हुई। दोस्तों, कहानी आगे बढ़ाने से पहले बताएं आप किस शहर से सुन रहे हैं? रिया ने सोचा, \"क्या मैं अंदर जाऊं?\" और उसने कदम बढ़ा दिया।\n\nPrompt 1: ...\nPrompt 2: ...\nPrompt 3: ..."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        320,
+        2224
+      ],
+      "id": "efe15b55-a539-49c4-a4d5-2ff2d3c0a546",
+      "name": "Script Writer AI",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Based on the story idea: {{ $json.idea }}, create a detailed visual description of the main character.\nExample: 'A small, chubby rabbit named Bunti with light grey fur, a distinctive white patch on his right eye, wearing a small yellow vest.'\nReturn ONLY the visual description in English.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -16,
+        2224
+      ],
+      "id": "30c0fea7-91c7-4efa-a657-975d120c8571",
+      "name": "Character Designer",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -912,
+        2768
+      ],
+      "id": "c2a552f1-c3a5-4e4c-b4b6-1ba0dc5aabe4",
+      "name": "Loop Scenes"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{\n(() => {\n  // Try to access \"Track Progress\" safely\n  let track = {};\n  try {\n    track = $(\"Track Progress\").item.json || {};\n  } catch (e) {\n    track = {};\n  }\n\n  // Try to access \"Loop Scenes\" safely\n  let loop = {};\n  try {\n    loop = $(\"Loop Scenes\").item.json || {};\n  } catch (e) {\n    loop = {};\n  }\n\n  // Helper function to clean up newlines, spaces, etc.\n  const clean = (str) =>\n    String(str || \"\")\n      .replace(/\\\\n/g, \"\")\n      .replace(/\\n/g, \"\")\n      .replace(/\\r/g, \"\")\n      .trim();\n\n  // Choose URL priority:\n  // 1️⃣ Track audioPublicUrl if valid\n  // 2️⃣ Fallback to $json.id (the R2 URL)\n  const hasTrackUrl =\n    track.audioPublicUrl &&\n    track.audioPublicUrl !== \"\" &&\n    track.audioPublicUrl.toLowerCase() !== \"null\";\n\n  const finalUrl = clean(hasTrackUrl ? track.audioPublicUrl : $json.id);\n\n  return {\n    audioPublicUrl: finalUrl,\n    sceneNumber: loop.sceneNumber || \"\"\n  };\n})()\n}}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        608,
+        2784
+      ],
+      "id": "dcdc5b76-b3cd-4a57-806a-c0d0f756b969",
+      "name": "Create Downloadable URL"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://n8n.tinysaas.fun/webhook/generate-story-voice",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({\n  text: ($node[\"Loop Scenes\"].json.narration || \"\").replace(/\\[.*?\\]/g, \"\").trim(),\n  prompt: $('Set Variables').item.json.tts_prompt || \"Say the following like you are narrating a story\",\n  voice_config: {\n    languageCode: $('Set Variables').item.json.tts_languageCode || \"en-us\",\n    name: $('Set Variables').item.json.tts_voice_name || \"Kore\",\n    model_name: $('Set Variables').item.json.tts_model_name || \"gemini-2.5-flash-tts\"\n  },\n  metadata: {\n    scene: $node[\"Loop Scenes\"].json.sceneNumber || \"1\",\n    drive_folder_id: $('Unified Folder Info').item.json.folderId,\n    tts_provider: $('Unified Folder Info').item.json.tts_provider\n  }\n}) }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        368,
+        2784
+      ],
+      "id": "d90a39fa-da8c-44bf-b8c2-d411400308c7",
+      "name": "Subflow: Google TTS"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "BS3cU6fl4xJz5Z2o",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Initial URLs",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/BS3cU6fl4xJz5Z2o"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Scene",
+              "keyValue": "={{ $('Loop Scenes').item.json.sceneNumber }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -496,
+        2784
+      ],
+      "id": "73c0f438-ec6b-4934-a7f0-76d566449d7b",
+      "name": "Track Progress",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "BS3cU6fl4xJz5Z2o",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Initial URLs",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/BS3cU6fl4xJz5Z2o"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Scene",
+              "keyValue": "={{ $json.sceneNumber }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Scene": "={{ $json.sceneNumber }}",
+            "audioPublicUrl": "={{ $json.audioPublicUrl }}",
+            "Narration": "={{ $('Loop Scenes').item.json.narration}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Scene",
+              "displayName": "Scene",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "audioPublicUrl",
+              "displayName": "audioPublicUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "imagePublicUrl",
+              "displayName": "imagePublicUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "imagePublicUrl2",
+              "displayName": "imagePublicUrl2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "imagePublicUrl3",
+              "displayName": "imagePublicUrl3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Narration",
+              "displayName": "Narration",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        784,
+        2784
+      ],
+      "id": "57c12bbf-26dd-4871-bbf6-7b4b5f1d6a42",
+      "name": "Update URLs",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{\n  JSON.stringify((() => {\n    const track = $if($node[\"Track Progress\"].isExecuted, $node[\"Track Progress\"].item.json, {}) || {};\n    const loop = $if($node[\"Loop Scenes\"].isExecuted, $node[\"Loop Scenes\"].item.json, {}) || {};\n    const gen = $json || {};\n\n    // Helper function to clean URLs\n    const clean = (val) => (typeof val === \"string\" ? val.replace(/\\s+/g, \"\").replace(/\\n/g, \"\") : val);\n\n    const result = {\n      imagePublicUrl: clean(track.imagePublicUrl || gen.id1 || null),\n      imagePublicUrl2: clean(track.imagePublicUrl2 || gen.id2 || null),\n      imagePublicUrl3: clean(track.imagePublicUrl3 || gen.id3 || null),\n      sceneNumber: loop.sceneNumber || \"\"\n    };\n\n    // Remove null or empty keys\n    for (const key in result) {\n      if (!result[key]) delete result[key];\n    }\n\n    return result;\n  })())\n}}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -112,
+        2784
+      ],
+      "id": "a884a47c-3b44-40b6-931b-8c79eabce7c1",
+      "name": "Create Downloadable Image URL"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "BS3cU6fl4xJz5Z2o",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Initial URLs",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/BS3cU6fl4xJz5Z2o"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Scene",
+              "keyValue": "={{ $('Loop Scenes').item.json.sceneNumber }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Scene": "={{ $('Loop Scenes').item.json.sceneNumber }}",
+            "imagePublicUrl": "={{ $json.imagePublicUrl }}",
+            "imagePublicUrl2": "={{ $json.imagePublicUrl2 }}",
+            "imagePublicUrl3": "={{ $json.imagePublicUrl3 }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Scene",
+              "displayName": "Scene",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "audioPublicUrl",
+              "displayName": "audioPublicUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "imagePublicUrl",
+              "displayName": "imagePublicUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "imagePublicUrl2",
+              "displayName": "imagePublicUrl2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "imagePublicUrl3",
+              "displayName": "imagePublicUrl3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        176,
+        2784
+      ],
+      "id": "1e58fa57-afc5-4c51-ad0f-3a145e04aa3d",
+      "name": "Update Image URLs",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "UB98FYaYXkXvMhzz",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Controller",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/UB98FYaYXkXvMhzz"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Video_Idea": "={{ $('Set Variables').item.json.idea }}",
+            "Drive_Golder_ID": "={{\n(() => {\n  const idea = $(\"Set Variables\").item.json.idea || \"story\";\n  const now = new Date();\n\n  // Create timestamp for uniqueness\n  const timestamp = now.toISOString().replace(/[:.]/g, \"-\");\n\n  // Transliterate Hindi or any Unicode text into ASCII-safe characters\n  const slug = idea\n    .normalize(\"NFD\")                      // Split characters & accents\n    .replace(/[\\u0300-\\u036f]/g, \"\")       // Remove diacritics\n    .replace(/[^\\w\\s-]/g, \"\")              // Remove symbols\n    .trim()\n    .replace(/\\s+/g, \"_\")                  // Replace spaces with underscores\n    .substring(0, 40) || \"story\";          // Limit length\n\n  // If still not safe ASCII, fallback to short hash\n  const safeSlug = /^[\\x00-\\x7F]+$/.test(slug)\n    ? slug\n    : Buffer.from(idea).toString(\"base64\").substring(0, 8);\n\n  return `${safeSlug}_${timestamp}`;\n})()\n}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Video_Idea",
+              "displayName": "Video_Idea",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Drive_Golder_ID",
+              "displayName": "Drive_Golder_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        976,
+        2560
+      ],
+      "id": "b17c7061-dce0-4516-a530-ad4715ca67b1",
+      "name": "Insert Drive ID"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "UB98FYaYXkXvMhzz",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Controller",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/UB98FYaYXkXvMhzz"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Video_Idea",
+              "keyValue": "={{ \n  $if($('Set Variables').isExecuted, \n    $('Set Variables').item.json.idea, \n    $if($('Set Variables1').isExecuted, \n      $('Set Variables1').item.json.idea, \n      ''\n    )\n  ) \n}}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        176,
+        2544
+      ],
+      "id": "610cb6e9-7036-40b0-9db5-a318776f1d00",
+      "name": "Check Folder Exists",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5d014133-45a5-4041-93b9-4b240d3e8a2c",
+              "leftValue": "={{ $json.Video_Idea || '' }}",
+              "rightValue": "={{ $('Set Variables').first().json.idea || '' }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        368,
+        2544
+      ],
+      "id": "b55c104b-9334-47f6-8a09-6b224ef101d2",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{(() => {\n  // 1️⃣ Folder from Data Table (Insert Drive ID)\n  const dataTable = $if($(\"Insert Drive ID\").isExecuted, $('Insert Drive ID').item.json, null);\n\n  // 2️⃣ Existing folder check\n  const existingFolder = $if($(\"Check Folder Exists\").isExecuted, $('Check Folder Exists').item.json, null);\n\n  // 3️⃣ Newly created folder\n  const newFolder = $if($(\"Create Story Folder\").isExecuted, $('Create Story Folder').item.json, null);\n\n  // Determine which to use\n  let source = \"none\";\n  let folder = {};\n\n  if (dataTable && (dataTable.Drive_Golder_ID || dataTable.folderId)) {\n    folder = dataTable;\n    source = \"datatable\";\n  } else if (existingFolder && existingFolder.id) {\n    folder = existingFolder;\n    source = \"existing\";\n  } else if (newFolder && newFolder.id) {\n    folder = newFolder;\n    source = \"created\";\n  }\n\n  return {\n    folderId: folder.Drive_Golder_ID || folder.folderId || folder.id || \"\",\n    folderName: folder.name || folder.Video_Idea || \"\",\n    from: source\n  };\n})()}}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        592,
+        2528
+      ],
+      "id": "01f2e08d-f00d-4bd9-b7f7-cf7261f6d314",
+      "name": "Unified Folder Info"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://n8n.tinysaas.fun/webhook/generate-scene-images-robust",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ \nJSON.stringify({\n  imgprompt1: $json.prompt1,\n  imgprompt2: $json.prompt2,\n  imgprompt3: $json.prompt3,\n  metadata: {\n    scene: $json.sceneNumber,\n    drive_folder_id: $('Unified Folder Info').first().json.folderId\n  }\n})\n}}\n",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -304,
+        2784
+      ],
+      "id": "86ac34f3-cd39-4d4b-ac5d-4e1e1a810ce4",
+      "name": "Subflow: Generate Image"
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "bucketName": "yt-scenes",
+        "folderName": "={{ \n(() => {\n  const idea = $(\"Set Variables\").first().json.idea || \"story\";\n  const now = new Date();\n  const timestamp = now.toISOString().replace(/[:.]/g, \"-\");\n\n  const slug = idea\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\")\n    .replace(/[^\\w\\s-]/g, \"\")\n    .trim()\n    .replace(/\\s+/g, \"_\")\n    .substring(0, 40) || \"story\";\n\n  const safeSlug = /^[\\x00-\\x7F]+$/.test(slug)\n    ? slug\n    : Buffer.from(idea).toString(\"base64\").substring(0, 8);\n\n  return `${safeSlug}_${timestamp}`;\n})()\n}}\n",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [
+        768,
+        2560
+      ],
+      "id": "a469ce4e-db7a-49c9-9199-5099a5baadcf",
+      "name": "Create Story Folder",
+      "credentials": {
+        "s3": {
+          "id": "2xEMopykliclEARw",
+          "name": "S3 (R2 Cloudfare)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d1a64223-12d3-475f-9988-99851d4da63a",
+              "leftValue": "={{ $('Parse Scenes').item.json.sceneNumber }}",
+              "rightValue": "={{ $('Parse Scenes').item.json.totalScenes }}",
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1136,
+        2560
+      ],
+      "id": "ec9eae16-0978-4ce7-868c-ad2011b0c873",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "content": "## Story & Scene Generator",
+        "height": 320,
+        "width": 1344
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -240,
+        2080
+      ],
+      "typeVersion": 1,
+      "id": "b95c013e-3e87-459b-bf53-0e515833bb05",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Create S3 Folder for story",
+        "height": 304,
+        "width": 1008,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        96,
+        2416
+      ],
+      "typeVersion": 1,
+      "id": "545604a6-3d19-4bea-99de-8da5eaf86fa6",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Telegram Notification & Controller",
+        "height": 320,
+        "width": 944,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1200,
+        2080
+      ],
+      "typeVersion": 1,
+      "id": "e83554bd-7b60-4d9b-9a56-80e3fc5be9f1",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Image Generation",
+        "height": 240,
+        "width": 1280
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1200,
+        2736
+      ],
+      "typeVersion": 1,
+      "id": "3f2be08e-1e0b-4bda-bd11-5e26df372a4b",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Audio Generation",
+        "height": 240,
+        "width": 1008,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        96,
+        2736
+      ],
+      "typeVersion": 1,
+      "id": "ce97616c-3d76-446c-85a5-dd902a05ac6a",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "KGI1D2fgu6LLSU2u",
+          "mode": "list",
+          "cachedResultName": "YT Automate Settings",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/KGI1D2fgu6LLSU2u"
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -384,
+        2224
+      ],
+      "id": "8e50d9b2-91da-4f31-b2be-be48a59b8160",
+      "name": "TTS/Image Settings1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "74bafd18-5ed5-48e7-bfeb-ac8fbca5ca16",
+              "name": "tts_prompt",
+              "value": "={{ $json.Prompt }}",
+              "type": "string"
+            },
+            {
+              "id": "177b890c-7c61-4461-af28-227fa6b864e8",
+              "name": "tts_languageCode",
+              "value": "={{ $json.language_code }}",
+              "type": "string"
+            },
+            {
+              "id": "6387f5d2-b110-4b40-9d40-a27c83c0497b",
+              "name": "tts_voice_name",
+              "value": "={{ $json.voice_name }}",
+              "type": "string"
+            },
+            {
+              "id": "bdd676b0-3b52-4328-be8e-1ab683e247c4",
+              "name": "tts_model_name",
+              "value": "={{ $json.model_name }}",
+              "type": "string"
+            },
+            {
+              "id": "5ebedcde-f823-4c48-9cfd-86165edeabbc",
+              "name": "idea",
+              "value": "={{\n(() => {\n  // Prefer idea from current node\n  if ($json.idea) return $json.idea;\n\n  // Telegram path (if executed)\n  if ($('Telegram Trigger').isExecuted) {\n    return $('Telegram Trigger').first().json.message?.text || '';\n  }\n\n  // Google Sheets path (if executed)\n  if ($('Update row in sheet1').isExecuted) {\n    return $('Update row in sheet1').item.json.idea || '';\n  }\n\n  // Default fallback\n  return 'Untitled Idea';\n})()\n}}",
+              "type": "string"
+            },
+            {
+              "id": "56a3607a-2993-475a-bfc6-95e6562015a4",
+              "name": "tg_chat_id",
+              "value": "=594158883",
+              "type": "number"
+            },
+            {
+              "id": "bb17b992-22a1-477c-94ba-4b5e05ebdaef",
+              "name": "tts_provider",
+              "value": "={{ $json.tts_provider }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -192,
+        2224
+      ],
+      "id": "2a567d3d-8567-47e4-a729-4b29ac8d0f70",
+      "name": "Set Variables"
+    },
+    {
+      "parameters": {
+        "url": "https://n8n.tinysaas.fun/webhook/render-stich",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "tg_chat_id",
+              "value": "=594158883"
+            },
+            {
+              "name": "idea",
+              "value": "={{ $json.Video_Idea }}"
+            },
+            {
+              "name": "total_scenes",
+              "value": "={{ $('Parse Scenes').item.json.totalScenes }}"
+            },
+            {
+              "name": "folder_id",
+              "value": "={{ $json.Drive_Golder_ID }}"
+            },
+            {
+              "name": "mood",
+              "value": "={{ $('Mood Analyzer').item.json.output }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -528,
+        2416
+      ],
+      "id": "475b1866-5c4d-457a-ab06-5ec7d24f95a5",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "UB98FYaYXkXvMhzz",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Controller",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/UB98FYaYXkXvMhzz"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Video_Idea",
+              "condition": "isNotEmpty"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -912,
+        2416
+      ],
+      "id": "743c7a4e-9430-4692-b24d-8ed9cec66c90",
+      "name": "Get row(s)3"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Sort items by updatedAt descending\nconst items = $input.all().sort((a, b) => \n  new Date(b.json.updatedAt) - new Date(a.json.updatedAt)\n);\n\n// Return only the most recent one\nreturn [items[0]];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        2416
+      ],
+      "id": "1612c601-252a-4850-a89a-ce95ce305b3a",
+      "name": "Code in JavaScript3"
+    },
+    {
+      "parameters": {
+        "operation": "deleteRows",
+        "dataTableId": {
+          "__rl": true,
+          "value": "BS3cU6fl4xJz5Z2o",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Initial URLs",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/BS3cU6fl4xJz5Z2o"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Scene",
+              "condition": "isNotEmpty"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -592,
+        2096
+      ],
+      "id": "fdd98f2e-9b04-4688-8765-a8b2b5d126a4",
+      "name": "Delete row(s)2",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "deleteRows",
+        "dataTableId": {
+          "__rl": true,
+          "value": "pjBqBAm7fEgW0Tbi",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Final URLs",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/pjBqBAm7fEgW0Tbi"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "finalPublicUrl",
+              "condition": "isNotEmpty"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -592,
+        2224
+      ],
+      "id": "bbf90c52-c5cc-483d-bccf-cee2911ca7dd",
+      "name": "Delete row(s)3",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "content": "## Calling Render Subflow",
+        "height": 320,
+        "width": 1280,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1200,
+        2400
+      ],
+      "typeVersion": 1,
+      "id": "cc85f087-3900-463e-9958-d86e0c1854b5",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following story: {{ $('Script Writer AI').item.json.output }}\n\nMain Character Visual Bible: {{ $('Character Designer').item.json.output }}\n\nYou are a Viral YouTube Growth Expert. Generate a high-CTR SEO package.\n\nReturn ONLY a clean JSON object with these keys:\n\n1. \"titles\": Create 3 viral, high-emotion Hindi titles. Use the 'Curiosity Gap' method.\n\n2. \"description\": A 2-line emotional summary in Hindi including 'Shiksha' and keywords.\n\n3. \"tags\": 15 trending tags.\n\n4. \"thumbnail_hook\": A highly detailed \"Nano Banana\" prompt. Follow these strict rules for Python-ready composition:\n   - START: \"A wide-angle 16:9 cinematic matte painting poster, 8k resolution.\"\n   - ART STYLE: \"Impasto texture, heavy brushstrokes, warm candlelight glow, Indian setting, emotional atmosphere.\"\n   - COMPOSITION: \"Rule of Thirds. Massive close-up of the character (from Visual Bible) on the FAR LEFT. The character should be looking towards the right with an expression of shock.\"\n   - THE BLANK SPACE RULE: \"The entire right 50% of the image MUST be a simple, beautifully blurred, dark background (negative space). Do NOT include any text, letters, or words in the image. Leave this area as a clean blank canvas for text placement.\"\n   - LIGHTING: \"Dramatic rim lighting on the character, making them pop from the dark right-side background.\"\n\nReturn ONLY the JSON. No other text.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        832,
+        2224
+      ],
+      "id": "4d9802e0-b12f-49bc-aea9-3bd604bd171a",
+      "name": "SEO Architect",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the emotional core of this story: \n{{ $json.output }}\n\nYour task is to categorize the overall mood into EXACTLY one of these categories:\n[Sad, Happy, Action, Inspiring, Horror]\n\n- Choose 'Sad' if the story is melancholic, tragic, or deeply emotional.\n- Choose 'Happy' if the story is whimsical, lighthearted, or joyful.\n- Choose 'Inspiring' if the story focus is on a moral lesson, wisdom, or personal growth.\n- Choose 'Action' if the story is fast-paced, high-tension, or involves a conflict.\n\nReturn ONLY the single word. Do not include any explanation or punctuation.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        656,
+        2080
+      ],
+      "id": "37210f6b-f15d-4fb7-8fcc-1ae0dbbd7d9c",
+      "name": "Mood Analyzer",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        256,
+        2080
+      ],
+      "id": "55c12f0f-8cf8-4058-ab06-2d760ea6e839",
+      "name": "Wait",
+      "webhookId": "3c74ec02-44eb-4cac-abcd-a06dd891506d"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        512,
+        2080
+      ],
+      "id": "0ac6d26f-3564-4775-9aca-11bd7392c451",
+      "name": "Wait1",
+      "webhookId": "5cf7e287-807d-48ac-bef5-fc0275cdfa7d"
+    },
+    {
+      "parameters": {
+        "amount": 2
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        960,
+        2080
+      ],
+      "id": "3153bb81-e524-46d1-86be-e68363ea9f4e",
+      "name": "Wait2",
+      "webhookId": "6ccc7898-f13a-4827-90d9-b6f07ac37804"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "617b938b-681f-45bb-92ec-85c8e7c28fd6",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "Go",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -976,
+        2240
+      ],
+      "id": "cb2cb015-9969-42c7-9d48-17ea44e72984",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "170LA4TMk52WktW-3yR9yGp3s0WIpAMecR8_LvFJp9nA",
+          "mode": "list",
+          "cachedResultName": "YT Automate",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/170LA4TMk52WktW-3yR9yGp3s0WIpAMecR8_LvFJp9nA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Story Prompt",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/170LA4TMk52WktW-3yR9yGp3s0WIpAMecR8_LvFJp9nA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idea": "={{ $('Trigger').item.json.idea }}",
+            "Start Time": "={{ new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) }}"
+          },
+          "matchingColumns": [
+            "idea"
+          ],
+          "schema": [
+            {
+              "id": "idea",
+              "displayName": "idea",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "youtube_url",
+              "displayName": "youtube_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Start Time",
+              "displayName": "Start Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "End Time",
+              "displayName": "End Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -768,
+        2096
+      ],
+      "id": "e15430b3-34bc-448c-aac2-0709aef5a242",
+      "name": "Update row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "CD0TNlV0FWzxuni7",
+          "name": "Google Sheets t39"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -768,
+        2240
+      ],
+      "id": "995cf9b6-6265-4ecb-99d0-bb7f04184bda",
+      "name": "Telegram Trigger",
+      "webhookId": "beb6ee55-17c8-4bcb-9964-7dfed8608f5c",
+      "credentials": {
+        "telegramApi": {
+          "id": "IKjmySZ5em3x9SYw",
+          "name": "YT-Gurukul Kahaniya"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = JSON.parse($('SEO Architect').first().json.output.replace(/```json|```/g, '').trim());\n\nreturn [\n  {\n    json: {\n      title_1: data.titles?.[0] || \"\",\n      title_2: data.titles?.[1] || \"\",\n      title_3: data.titles?.[2] || \"\",\n      description: data.description || \"\",\n      tags: data.tags || \"\",\n      thumbnail_hook: data.thumbnail_hook || \"\"\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -352,
+        2416
+      ],
+      "id": "51736dd4-04a0-4384-b57e-b773b677b7e5",
+      "name": "SEO Info Formater",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "170LA4TMk52WktW-3yR9yGp3s0WIpAMecR8_LvFJp9nA",
+          "mode": "list",
+          "cachedResultName": "YT Automate",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/170LA4TMk52WktW-3yR9yGp3s0WIpAMecR8_LvFJp9nA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Story Prompt",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/170LA4TMk52WktW-3yR9yGp3s0WIpAMecR8_LvFJp9nA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idea": "={{ $('Set Variables').item.json.idea }}",
+            "title_1": "={{ $json.title_1 }}",
+            "title_2": "={{ $json.title_2 }}",
+            "title_3": "={{ $json.title_3 }}",
+            "description": "={{ $json.description }}",
+            "tags": "={{ $json.tags }}",
+            "thumbnail_hook": "={{ $json.thumbnail_hook }}"
+          },
+          "matchingColumns": [
+            "idea"
+          ],
+          "schema": [
+            {
+              "id": "idea",
+              "displayName": "idea",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "youtube_url",
+              "displayName": "youtube_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Start Time",
+              "displayName": "Start Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "End Time",
+              "displayName": "End Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "title_1",
+              "displayName": "title_1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "title_2",
+              "displayName": "title_2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "title_3",
+              "displayName": "title_3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "tags",
+              "displayName": "tags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "thumbnail_hook",
+              "displayName": "thumbnail_hook",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -160,
+        2416
+      ],
+      "id": "710d8de4-43a3-4e6e-82df-990eef3a8f39",
+      "name": "Update row in sheet",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "CD0TNlV0FWzxuni7",
+          "name": "Google Sheets t39"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        2400
+      ],
+      "id": "59c74613-8b3c-4849-9c09-62a598bdbd0a",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "jO6VbRjkjpgUONmk",
+          "name": "Gemini Text Generation Chalta Purza"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        224,
+        2288
+      ],
+      "id": "5808fbb0-2ad8-4b87-9123-2a133588009a",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "jO6VbRjkjpgUONmk",
+          "name": "Gemini Text Generation Chalta Purza"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        656,
+        2256
+      ],
+      "id": "d99a98e0-cbcd-45c9-9d0a-bc3c37caaf3a",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "jO6VbRjkjpgUONmk",
+          "name": "Gemini Text Generation Chalta Purza"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        832,
+        2400
+      ],
+      "id": "1f005905-0a99-450b-a63c-b822f05b67b0",
+      "name": "Google Gemini Chat Model3",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "TrXRKoyfEEz4Df5L",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=AIzaSyARsBbmwWUf9sDGK_rQin7krSlKtuLswuE",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"role\": \"user\",\n      \"parts\": [\n        {\n          \"text\": \"{{ $('SEO Info Formater').item.json.thumbnail_hook }}\"\n        }\n      ]\n    }\n  ],\n  \"generationConfig\": {\n    \"response_modalities\": [\"IMAGE\", \"TEXT\"],\n    \"image_config\": {\n      \"aspect_ratio\": \"16:9\"\n    }\n  }\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -912,
+        2560
+      ],
+      "id": "f1b4f082-ddcc-4e66-9730-b7245aa465d7",
+      "name": "Thumbnail-Nano-Banana",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Read Base64 from current item\nconst base64String = $input.first().json.candidates[0].content.parts[1].inlineData.data\n\n// Return item with binary mp3\nreturn [\n  {\n    json: {\n      // keep any JSON data you want\n    },\n    binary: {\n      data: {\n        data: base64String,      // Base64 as string\n        mimeType: 'image/png',  // MP3 mimetype\n        fileExtension: 'png',\n        fileName: 'thumbnail.png',\n      },\n    },\n  },\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        2560
+      ],
+      "id": "f16fb4e7-c1be-4add-bc6a-366105dbc0b6",
+      "name": "Base64 to Thumbnail"
+    },
+    {
+      "parameters": {
+        "name": "={{ 'thumbnail_' + new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }).replace(/[ ,:/]/g, '_').replace(/__/g, '_') }}.jpg",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1-_2qQIvY3padcf37yAOw6UQWulxzZ9Tl",
+          "mode": "list",
+          "cachedResultName": "FB-N8N",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1-_2qQIvY3padcf37yAOw6UQWulxzZ9Tl"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -528,
+        2560
+      ],
+      "id": "276fec12-32a4-4400-913f-585ce5fc46e3",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "Fni1Cc3yLS8SjGps",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "170LA4TMk52WktW-3yR9yGp3s0WIpAMecR8_LvFJp9nA",
+          "mode": "list",
+          "cachedResultName": "YT Automate",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/170LA4TMk52WktW-3yR9yGp3s0WIpAMecR8_LvFJp9nA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Story Prompt",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/170LA4TMk52WktW-3yR9yGp3s0WIpAMecR8_LvFJp9nA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idea": "={{ $('Set Variables').item.json.idea }}",
+            "thumbnal_link": "={{ 'https://drive.google.com/uc?export=download&id=' + $json[\"id\"] }}"
+          },
+          "matchingColumns": [
+            "idea"
+          ],
+          "schema": [
+            {
+              "id": "idea",
+              "displayName": "idea",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "youtube_url",
+              "displayName": "youtube_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Start Time",
+              "displayName": "Start Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "End Time",
+              "displayName": "End Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "title_1",
+              "displayName": "title_1",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "title_2",
+              "displayName": "title_2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "title_3",
+              "displayName": "title_3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tags",
+              "displayName": "tags",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "thumbnail_hook",
+              "displayName": "thumbnail_hook",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "thumbnal_link",
+              "displayName": "thumbnal_link",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -352,
+        2560
+      ],
+      "id": "3f09141d-ce45-44c2-b921-80b7b532e4fd",
+      "name": "Update row in sheet2",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "CD0TNlV0FWzxuni7",
+          "name": "Google Sheets t39"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sheet-edit",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1120,
+        2112
+      ],
+      "id": "3c774e45-8199-4afb-a3fa-53444eef413b",
+      "name": "Webhook",
+      "webhookId": "efc81077-f487-40ae-8035-2a740b1c0cf5"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "170LA4TMk52WktW-3yR9yGp3s0WIpAMecR8_LvFJp9nA",
+          "mode": "list",
+          "cachedResultName": "YT Automate",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/170LA4TMk52WktW-3yR9yGp3s0WIpAMecR8_LvFJp9nA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Story Prompt",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/170LA4TMk52WktW-3yR9yGp3s0WIpAMecR8_LvFJp9nA/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1120,
+        2240
+      ],
+      "id": "a70fbad8-274e-48f9-b4d9-55c3d995ffec",
+      "name": "Trigger",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "CD0TNlV0FWzxuni7",
+          "name": "Google Sheets t39"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "edb79771-d9e4-44cc-8748-4b7aae17077b",
+              "name": "narration",
+              "value": "={{ $json.narration }}",
+              "type": "string"
+            },
+            {
+              "id": "957f511d-bfb8-483b-967d-6bb7e9d4ec2d",
+              "name": "prompt1",
+              "value": "={{ $json.prompt1 }}",
+              "type": "string"
+            },
+            {
+              "id": "51abb8d8-a252-40c4-b1cc-90a06249f44f",
+              "name": "prompt2",
+              "value": "={{ $json.prompt2 }}",
+              "type": "string"
+            },
+            {
+              "id": "eb1b3ffb-085b-4334-ada3-591fd92bf5e0",
+              "name": "prompt3",
+              "value": "={{ $json.prompt3 }}",
+              "type": "string"
+            },
+            {
+              "id": "05d9afa4-aba2-464c-b96a-c8cf088942b7",
+              "name": "totalScenes",
+              "value": "={{ $json.totalScenes }}",
+              "type": "number"
+            },
+            {
+              "id": "5db495c9-1bdc-45d4-89cc-387ac932d362",
+              "name": "sceneNumber",
+              "value": "={{ $json.sceneNumber }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -688,
+        2784
+      ],
+      "id": "ab15cbe1-d2a6-4742-831f-03b77ee9ae05",
+      "name": "set-parameters"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n.tinysaas.fun",
+            "user-agent": "Mozilla/5.0 (compatible; Google-Apps-Script; beanserver; +https://script.google.com; id: UAEmdDd8D-kIhjvG6SderBlKMT8WDTi5OX7o)",
+            "content-length": "344",
+            "accept-encoding": "gzip, deflate, br",
+            "content-type": "application/json",
+            "x-forwarded-for": "107.178.193.97",
+            "x-forwarded-host": "n8n.tinysaas.fun",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "be92d452a53d",
+            "x-real-ip": "107.178.193.97"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "idea": "राजा की जादुई पतंग",
+            "status": "Go",
+            "youtube_url": "",
+            "Start Time": "",
+            "End Time": "",
+            "title_1": "",
+            "title_2": "",
+            "title_3": "",
+            "description": "",
+            "tags": "",
+            "thumbnail_hook": "",
+            "thumbnal_link": "",
+            "_meta": {
+              "row": 9,
+              "sheetName": "Story Prompt",
+              "editedAt": "2026-01-14T12:21:17.241Z",
+              "triggeredBy": "thakurg39@gmail.com"
+            }
+          },
+          "webhookUrl": "https://n8n.tinysaas.fun/webhook/sheet-edit",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Parse Scenes": {
+      "main": [
+        [
+          {
+            "node": "Loop Scenes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Script Writer AI": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Character Designer": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Scenes": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "set-parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Downloadable URL": {
+      "main": [
+        [
+          {
+            "node": "Update URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subflow: Google TTS": {
+      "main": [
+        [
+          {
+            "node": "Create Downloadable URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Track Progress": {
+      "main": [
+        [
+          {
+            "node": "Subflow: Generate Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update URLs": {
+      "main": [
+        [
+          {
+            "node": "Loop Scenes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Downloadable Image URL": {
+      "main": [
+        [
+          {
+            "node": "Update Image URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Image URLs": {
+      "main": [
+        [
+          {
+            "node": "Subflow: Google TTS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Drive ID": {
+      "main": [
+        [
+          {
+            "node": "Unified Folder Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Folder Exists": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Unified Folder Info",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Story Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unified Folder Info": {
+      "main": [
+        [
+          {
+            "node": "Parse Scenes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subflow: Generate Image": {
+      "main": [
+        [
+          {
+            "node": "Create Downloadable Image URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Story Folder": {
+      "main": [
+        [
+          {
+            "node": "Insert Drive ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Get row(s)3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TTS/Image Settings1": {
+      "main": [
+        [
+          {
+            "node": "Set Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Variables": {
+      "main": [
+        [
+          {
+            "node": "Character Designer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s)3": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript3": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete row(s)3": {
+      "main": [
+        [
+          {
+            "node": "TTS/Image Settings1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete row(s)2": {
+      "main": [
+        [
+          {
+            "node": "Delete row(s)3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Architect": {
+      "main": [
+        [
+          {
+            "node": "Check Folder Exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "SEO Info Formater",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mood Analyzer": {
+      "main": [
+        [
+          {
+            "node": "Wait2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Script Writer AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Mood Analyzer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait2": {
+      "main": [
+        [
+          {
+            "node": "SEO Architect",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Delete row(s)2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Delete row(s)2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SEO Info Formater": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Character Designer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Script Writer AI",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Mood Analyzer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "SEO Architect",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Thumbnail-Nano-Banana",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Thumbnail-Nano-Banana": {
+      "main": [
+        [
+          {
+            "node": "Base64 to Thumbnail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Base64 to Thumbnail": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Trigger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set-parameters": {
+      "main": [
+        [
+          {
+            "node": "Track Progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "85e8b8ed-bf0c-4902-9879-d6a8a57ec9dd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "26999db1e681e6a87364716419329ff310f36bdcdb3a6fae594cdba3a86aed90"
+  },
+  "id": "rb7k1Vy7JcoWfL39",
+  "tags": []
+}

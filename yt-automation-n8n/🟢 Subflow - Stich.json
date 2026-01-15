@@ -1,0 +1,378 @@
+{
+  "name": "🟢 Subflow - Stich",
+  "nodes": [
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "finalPublicUrl",
+              "renameField": true,
+              "outputFieldName": "sceneVideos"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -416,
+        -336
+      ],
+      "id": "94800a93-be3f-4cff-9599-836fde6ffd93",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{\n(() => {\n  const clean = (str) =>\n    String(str || \"\")\n      .replace(/\\\\n/g, \"\")\n      .replace(/\\n/g, \"\")\n      .replace(/\\r/g, \"\")\n      .trim();\n\n  const urls = $json.sceneVideos || [];\n  return {\n    sceneVideos: urls.map(clean),\n  };\n})()\n}}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -192,
+        -336
+      ],
+      "id": "56bd15db-cca8-4901-b3c9-34079f265ef7",
+      "name": "Clean URL"
+    },
+    {
+      "parameters": {
+        "content": "## Stich Scenes",
+        "height": 224,
+        "width": 1776,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -944,
+        -400
+      ],
+      "typeVersion": 1,
+      "id": "ce4f1866-4573-4e4b-975d-683a2eb8b16b",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "path": "stich",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -864,
+        -336
+      ],
+      "id": "41ee6cac-cde2-4af7-9d96-95d8dd256e27",
+      "name": "Webhook",
+      "webhookId": "34ed67f2-1245-4d96-993e-d09b6f4b1d62"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "pjBqBAm7fEgW0Tbi",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Final URLs",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/pjBqBAm7fEgW0Tbi"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "finalPublicUrl",
+              "condition": "neq"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -640,
+        -336
+      ],
+      "id": "118141ce-1eb2-4e73-bbd7-3889cfceabd5",
+      "name": "Update Final URLs",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "yt-scenes",
+        "fileName": "={{ $('Webhook').item.json.body.folder_id }}/Rendered/final.mp4",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [
+        256,
+        -336
+      ],
+      "id": "68fc487f-1e54-41d9-9a48-834dc0efb119",
+      "name": "Upload a file",
+      "credentials": {
+        "s3": {
+          "id": "2xEMopykliclEARw",
+          "name": "S3 (R2 Cloudfare)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://f8o844sc0oocgckwswsc8s8g.82.180.147.16.sslip.io/concat",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"videos\": {{ JSON.stringify($json.sceneVideos) }},\n  \"output_name\": \"final_story.mp4\"\n}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        32,
+        -336
+      ],
+      "id": "73b837ce-a1d5-417f-baaf-36aff6ee4e03",
+      "name": "FFMPEG Concat"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "170LA4TMk52WktW-3yR9yGp3s0WIpAMecR8_LvFJp9nA",
+          "mode": "list",
+          "cachedResultName": "YT Automate",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/170LA4TMk52WktW-3yR9yGp3s0WIpAMecR8_LvFJp9nA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Story Prompt",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/170LA4TMk52WktW-3yR9yGp3s0WIpAMecR8_LvFJp9nA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "idea": "={{ $('Webhook').item.json.body.idea }}",
+            "status": "Complete",
+            "youtube_url": "=https://pub-4805fa7fcbc0475a8824e062d1c298ed.r2.dev/{{ $('Webhook').item.json.body.folder_id }}/Rendered/final.mp4",
+            "End Time": "={{ new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) }}"
+          },
+          "matchingColumns": [
+            "idea"
+          ],
+          "schema": [
+            {
+              "id": "idea",
+              "displayName": "idea",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "youtube_url",
+              "displayName": "youtube_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Start Time",
+              "displayName": "Start Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "End Time",
+              "displayName": "End Time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        480,
+        -336
+      ],
+      "id": "018e615c-bdfc-405e-a63b-419fb55957ab",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "CD0TNlV0FWzxuni7",
+          "name": "Google Sheets t39"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "594158883",
+        "text": "=<b>🚀 Your Viral Video is Ready!</b>\n\n🎥 <b>Final Video URL:</b> \n<a href=\"https://pub-4805fa7fcbc0475a8824e062d1c298ed.r2.dev/{{ $('Webhook').item.json.body.folder_id }}/Rendered/final.mp4\">Click to Download Video</a>",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        704,
+        -336
+      ],
+      "id": "d1b876ec-458c-407f-a030-e619fa1a28b2",
+      "name": "Send a text message2",
+      "webhookId": "23463c2a-d13c-43c6-9bae-fb7fd319d2a1",
+      "credentials": {
+        "telegramApi": {
+          "id": "IKjmySZ5em3x9SYw",
+          "name": "YT-Gurukul Kahaniya"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Clean URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean URL": {
+      "main": [
+        [
+          {
+            "node": "FFMPEG Concat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Update Final URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Final URLs": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload a file": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FFMPEG Concat": {
+      "main": [
+        [
+          {
+            "node": "Upload a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a text message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "84ad9908-ab91-4e71-a085-1fda61426453",
+  "meta": {
+    "instanceId": "26999db1e681e6a87364716419329ff310f36bdcdb3a6fae594cdba3a86aed90"
+  },
+  "id": "64LIFgdak5u635Bo",
+  "tags": []
+}

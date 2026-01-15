@@ -1,0 +1,2298 @@
+{
+  "name": "YouTube Illustrated Story Factory v3",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "/**\n * ULTRA-ROBUST SCENE PARSER v2.4\n * Supports English (\"Scene\") and Hindi (\"दृश्य\") headers.\n * Improved cleaning for Hindi punctuation.\n */\n\nconst rawText = $('Script Writer AI').first().json.output;\nconst GLOBAL_ART_STYLE = \"High-quality 3D Disney Pixar animation style, character centered, vibrant colors, soft cinematic lighting, 8k, consistent character features, ultra-detailed fur textures --v 6.0\";\n\nif (!rawText || typeof rawText !== 'string') {\n  throw new Error('No story text found in input.');\n}\n\n// 1. Split text into blocks using a flexible regex that matches \"Scene\" OR \"दृश्य\"\n// Matches: \"## Scene 1\", \"**दृश्य 1**\", \"### दृश्य 1\", \"Scene 1:\", etc.\nconst sceneHeaderRegex = /(?:#+|\\*\\*|)\\s*(?:Scene|दृश्य|Drishya)\\s*\\d+[:.*]*\\s*/gi;\nconst blocks = rawText.split(sceneHeaderRegex);\n\n// Filter blocks that contain the core elements\nconst sceneContent = blocks.filter(b => \n  b.toLowerCase().includes(\"narration\") || \n  b.includes(\"नैरेशन\") || \n  b.toLowerCase().includes(\"prompt\") || \n  b.includes(\"प्रोम्प्ट\")\n);\n\nif (sceneContent.length === 0) {\n    throw new Error('Could not find any scenes. Check if AI output uses headers like \"Scene 1\" or \"दृश्य 1\".');\n}\n\nconst totalScenes = sceneContent.length;\nconst scenes = [];\n\nsceneContent.forEach((block, index) => {\n  // --- NARRATION CLEANING ---\n  // Looks for \"Narration\" or \"नैरेशन\" and captures everything until the first Prompt\n  let narrationMatch = block.match(/(?:Narration|नैरेशन|न्रेशन)[:\\s\\*\\-]*([\\s\\S]*?)(?=Prompt 1|Illustration|प्रोम्प्ट 1|प्रॉम्प्ट 1)/i);\n  let narrationText = narrationMatch ? narrationMatch[1] : \"\";\n\n  // Handle repeated sections or \"Hindi Narration + Dialogues\" markers\n  if (narrationText.includes(\"[\") && narrationText.includes(\"]\")) {\n    const parts = narrationText.split(/\\[.*?\\]/);\n    narrationText = parts[parts.length - 1];\n  }\n\n  // Deduplicate sentences and clean up whitespace\n  const lines = narrationText.split(/[।\\n.!]/).map(l => l.trim()).filter(l => l.length > 5);\n  const uniqueLines = [...new Set(lines)];\n  narrationText = uniqueLines.join(\"। \") + (uniqueLines.length > 0 ? \"।\" : \"\");\n\n  // --- PROMPT EXTRACTION (3-SHOT LOGIC) ---\n  const p1 = block.match(/(?:Prompt 1|प्रोम्प्ट 1|प्रॉम्प्ट 1).*?[:\\s\\*\\-]*([\\s\\S]*?)(?=Prompt 2|प्रोम्प्ट 2|प्रॉम्प्ट 2|$)/i);\n  const p2 = block.match(/(?:Prompt 2|प्रोम्प्ट 2|प्रॉम्प्ट 2).*?[:\\s\\*\\-]*([\\s\\S]*?)(?=Prompt 3|प्रोम्प्ट 3|प्रॉम्प्ट 3|$)/i);\n  const p3 = block.match(/(?:Prompt 3|प्रोम्प्ट 3|प्रॉम्प्ट 3).*?[:\\s\\*\\-]*([\\s\\S]*?)$/i);\n\n  const clean = (txt) => txt ? txt.replace(/[*_#]/g, '').trim() : \"\";\n\n  if (narrationText.length > 5) {\n    scenes.push({\n      sceneNumber: index + 1,\n      totalScenes,\n      narration: clean(narrationText),\n      prompt1: p1 ? `${clean(p1[1])} -- Style: ${GLOBAL_ART_STYLE}` : \"\",\n      prompt2: p2 ? `${clean(p2[1])} -- Style: ${GLOBAL_ART_STYLE}` : \"\",\n      prompt3: p3 ? `${clean(p3[1])} -- Style: ${GLOBAL_ART_STYLE}` : \"\"\n    });\n  }\n});\n\nreturn scenes.map(scene => ({ json: scene }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1152,
+        3232
+      ],
+      "id": "42c0ec20-c342-4e8f-9dab-d972c75286f2",
+      "name": "Parse Scenes"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Write a viral Hindi story based on this Idea: {{ $('Set Variables').item.json.idea }}. You must use the following Character Profile for the main character: {{ $json.output }}.",
+        "options": {
+          "systemMessage": "=### STRUCTURAL RULES (STRICT COMPLIANCE REQUIRED):\nYou MUST use English labels for the structure regardless of the story language.\nUse ONLY 'Scene [number]', 'Narration', 'Prompt 1', 'Prompt 2', and 'Prompt 3'.\nDO NOT use Hindi words like 'दृश्य' or 'नैरेशन' for labels.\nThe story and dialogue must be in Hindi, but the structure must be in English.\n\n### Output Example:\nScene 1\nNarration: [Hindi text here...]\nPrompt 1 (Wide Shot): [English description...]\nPrompt 2 (Action Shot): [English description...]\nPrompt 3 (Close-up): [English description...]\n---\n\nYou are a professional Hindi YouTube Scriptwriter.\nYour Task:\nCreate a high-drama story script in Markdown format.\nStructure per Scene:\nScene [number]\nNarration\n[Hindi Narration + Dialogues in Devanagari]\nIllustration Prompt\n[Detailed English description for the image generator]\nRules:\nThe Illustration Prompt MUST always start with the Character Profile provided.\nUse 'Filmy' Hindi dialogues to make it engaging for an Indian audience.\nEnd with a Moral (Shiksha).\nFor every scene, you MUST provide exactly three illustration prompts in this format:\nPrompt 1 (Wide Shot): [Describe the full environment and character's position]\nPrompt 2 (Action Shot): [Describe the character performing a specific action]\nPrompt 3 (Close-up): [Describe the character's facial expression and emotion in detail]\nAll three prompts must follow the Character Profile."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        656,
+        2160
+      ],
+      "id": "0708cca0-e6dc-452e-aee6-62307c29e720",
+      "name": "Script Writer AI"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Based on the story idea: {{ $json.idea }}, create a detailed visual description of the main character.\nExample: 'A small, chubby rabbit named Bunti with light grey fur, a distinctive white patch on his right eye, wearing a small yellow vest.'\nReturn ONLY the visual description in English.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        336,
+        2160
+      ],
+      "id": "4672cfeb-0b51-4b3f-8503-b5001ff8e4af",
+      "name": "Character Designer"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        688,
+        2384
+      ],
+      "id": "5206d6b9-6c86-415b-aa15-5255c3a15fe5",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "jO6VbRjkjpgUONmk",
+          "name": "Gemini Text Generation Chalta Purza"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{(() => {   const chat = $(\"Set Idea\");   const tg = $(\"Telegram Trigger\");    if (chat && chat.isExecuted) return chat.item.json.sessionId;   if (tg && tg.isExecuted) return tg.item.json.message.chat.id.toString();   return \"\"; })()}}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        848,
+        2400
+      ],
+      "id": "3334b9e7-9386-4c1b-989d-689f1f17c639",
+      "name": "Simple Memory1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -928,
+        3232
+      ],
+      "id": "8491e587-9bbb-474b-9f08-ae80be8578c3",
+      "name": "Loop Scenes"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e6564126-fe31-4b6c-be72-3e14d1f2ebfd",
+              "leftValue": "={{ $node[\"Track Progress\"].json[\"imagePublicUrl\"] }}",
+              "rightValue": "null",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "e16ba218-3033-40d8-838c-2f29d90faed0",
+              "leftValue": "={{ $('Loop Scenes').item.json.prompt1 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -480,
+        3248
+      ],
+      "id": "a35aa05e-5af7-4806-8721-4963bb988c3c",
+      "name": "Image Exist?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e6564126-fe31-4b6c-be72-3e14d1f2ebfd",
+              "leftValue": "={{ $('Track Progress').item.json.audioPublicUrl }}",
+              "rightValue": "null",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "e16ba218-3033-40d8-838c-2f29d90faed0",
+              "leftValue": "={{ $('Parse Scenes').item.json.narration }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        400,
+        3264
+      ],
+      "id": "8efd019f-1511-4ada-8fef-68e1edec9f0c",
+      "name": "Audio Exist?"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{\n(() => {\n  // Try to access \"Track Progress\" safely\n  let track = {};\n  try {\n    track = $(\"Track Progress\").item.json || {};\n  } catch (e) {\n    track = {};\n  }\n\n  // Try to access \"Loop Scenes\" safely\n  let loop = {};\n  try {\n    loop = $(\"Loop Scenes\").item.json || {};\n  } catch (e) {\n    loop = {};\n  }\n\n  // Helper function to clean up newlines, spaces, etc.\n  const clean = (str) =>\n    String(str || \"\")\n      .replace(/\\\\n/g, \"\")\n      .replace(/\\n/g, \"\")\n      .replace(/\\r/g, \"\")\n      .trim();\n\n  // Choose URL priority:\n  // 1️⃣ Track audioPublicUrl if valid\n  // 2️⃣ Fallback to $json.id (the R2 URL)\n  const hasTrackUrl =\n    track.audioPublicUrl &&\n    track.audioPublicUrl !== \"\" &&\n    track.audioPublicUrl.toLowerCase() !== \"null\";\n\n  const finalUrl = clean(hasTrackUrl ? track.audioPublicUrl : $json.id);\n\n  return {\n    audioPublicUrl: finalUrl,\n    sceneNumber: loop.sceneNumber || \"\"\n  };\n})()\n}}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        880,
+        3280
+      ],
+      "id": "240d112e-8108-4841-97ae-6d685394d5fb",
+      "name": "Create Downloadable URL"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://n8n.tinysaas.fun/webhook/generate-scene-images-robust",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({\n  text: ($node[\"Loop Scenes\"].json.narration || \"\").replace(/\\[.*?\\]/g, \"\").trim(),\n  prompt: $('Set Variables').item.json.tts_prompt || \"Say the following like you are narrating a story\",\n  voice_config: {\n    languageCode: $('Set Variables').item.json.tts_languageCode || \"en-us\",\n    name: $('Set Variables').item.json.tts_voice_name || \"Kore\",\n    model_name: $('Set Variables').item.json.tts_model_name || \"gemini-2.5-flash-tts\"\n  },\n  metadata: {\n    scene: $node[\"Loop Scenes\"].json.sceneNumber || \"1\",\n    drive_folder_id: $('Unified Folder Info').item.json.folderId\n  }\n}) }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        672,
+        3072
+      ],
+      "id": "58292685-2821-4821-a666-4c0c00923a6b",
+      "name": "Subflow: Google TTS"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "KGI1D2fgu6LLSU2u",
+          "mode": "list",
+          "cachedResultName": "YT Automate Settings",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/KGI1D2fgu6LLSU2u"
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -320,
+        2304
+      ],
+      "id": "45d6df06-c16b-4a2b-b2b8-b74531b8ffb1",
+      "name": "TTS/Image Settings"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "BS3cU6fl4xJz5Z2o",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Initial URLs",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/BS3cU6fl4xJz5Z2o"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Scene",
+              "keyValue": "={{ $('Loop Scenes').item.json.sceneNumber }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -704,
+        3248
+      ],
+      "id": "3cdff5f3-f119-41df-b056-4b8c201c20c0",
+      "name": "Track Progress",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "BS3cU6fl4xJz5Z2o",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Initial URLs",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/BS3cU6fl4xJz5Z2o"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Scene",
+              "keyValue": "={{ $json.sceneNumber }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Scene": "={{ $json.sceneNumber }}",
+            "audioPublicUrl": "={{ $json.audioPublicUrl }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Scene",
+              "displayName": "Scene",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "audioPublicUrl",
+              "displayName": "audioPublicUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "imagePublicUrl",
+              "displayName": "imagePublicUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "imagePublicUrl2",
+              "displayName": "imagePublicUrl2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "imagePublicUrl3",
+              "displayName": "imagePublicUrl3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1104,
+        3280
+      ],
+      "id": "5c034435-f611-4991-b2ac-f6a6d479bbbb",
+      "name": "Update URLs",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{\n  JSON.stringify((() => {\n    const track = $if($node[\"Track Progress\"].isExecuted, $node[\"Track Progress\"].item.json, {}) || {};\n    const loop = $if($node[\"Loop Scenes\"].isExecuted, $node[\"Loop Scenes\"].item.json, {}) || {};\n    const gen = $json || {};\n\n    // Helper function to clean URLs\n    const clean = (val) => (typeof val === \"string\" ? val.replace(/\\s+/g, \"\").replace(/\\n/g, \"\") : val);\n\n    const result = {\n      imagePublicUrl: clean(track.imagePublicUrl || gen.id1 || null),\n      imagePublicUrl2: clean(track.imagePublicUrl2 || gen.id2 || null),\n      imagePublicUrl3: clean(track.imagePublicUrl3 || gen.id3 || null),\n      sceneNumber: loop.sceneNumber || \"\"\n    };\n\n    // Remove null or empty keys\n    for (const key in result) {\n      if (!result[key]) delete result[key];\n    }\n\n    return result;\n  })())\n}}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -16,
+        3184
+      ],
+      "id": "ee9a09c0-a7a6-46b5-9188-d73c5007a59a",
+      "name": "Create Downloadable Image URL"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "BS3cU6fl4xJz5Z2o",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Initial URLs",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/BS3cU6fl4xJz5Z2o"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Scene",
+              "keyValue": "={{ $('Loop Scenes').item.json.sceneNumber }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Scene": "={{ $('Loop Scenes').item.json.sceneNumber }}",
+            "imagePublicUrl": "={{ $json.imagePublicUrl }}",
+            "imagePublicUrl2": "={{ $json.imagePublicUrl2 }}",
+            "imagePublicUrl3": "={{ $json.imagePublicUrl3 }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Scene",
+              "displayName": "Scene",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "audioPublicUrl",
+              "displayName": "audioPublicUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "imagePublicUrl",
+              "displayName": "imagePublicUrl",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "imagePublicUrl2",
+              "displayName": "imagePublicUrl2",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "imagePublicUrl3",
+              "displayName": "imagePublicUrl3",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        400,
+        3056
+      ],
+      "id": "102ea3dd-be99-4ccd-9a9a-20da31125d31",
+      "name": "Update Image URLs",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "UB98FYaYXkXvMhzz",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Controller",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/UB98FYaYXkXvMhzz"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Video_Idea": "={{ $('Set Variables').item.json.idea }}",
+            "Drive_Golder_ID": "={{\n(() => {\n  const idea = $(\"Set Variables\").item.json.idea || \"story\";\n  const now = new Date();\n\n  // Create timestamp for uniqueness\n  const timestamp = now.toISOString().replace(/[:.]/g, \"-\");\n\n  // Transliterate Hindi or any Unicode text into ASCII-safe characters\n  const slug = idea\n    .normalize(\"NFD\")                      // Split characters & accents\n    .replace(/[\\u0300-\\u036f]/g, \"\")       // Remove diacritics\n    .replace(/[^\\w\\s-]/g, \"\")              // Remove symbols\n    .trim()\n    .replace(/\\s+/g, \"_\")                  // Replace spaces with underscores\n    .substring(0, 40) || \"story\";          // Limit length\n\n  // If still not safe ASCII, fallback to short hash\n  const safeSlug = /^[\\x00-\\x7F]+$/.test(slug)\n    ? slug\n    : Buffer.from(idea).toString(\"base64\").substring(0, 8);\n\n  return `${safeSlug}_${timestamp}`;\n})()\n}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Video_Idea",
+              "displayName": "Video_Idea",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Drive_Golder_ID",
+              "displayName": "Drive_Golder_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1168,
+        2720
+      ],
+      "id": "8ab383a5-9b0d-4b34-bdea-bb4dc1ea67d5",
+      "name": "Insert Drive ID"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "UB98FYaYXkXvMhzz",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Controller",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/UB98FYaYXkXvMhzz"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Video_Idea",
+              "keyValue": "={{ \n  $if($('Set Variables').isExecuted, \n    $('Set Variables').item.json.idea, \n    $if($('Set Variables1').isExecuted, \n      $('Set Variables1').item.json.idea, \n      ''\n    )\n  ) \n}}"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        352,
+        2704
+      ],
+      "id": "62b8b74f-bcb5-44be-ae54-6ef1035777d9",
+      "name": "Check Folder Exists",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "5d014133-45a5-4041-93b9-4b240d3e8a2c",
+              "leftValue": "={{ $json.Video_Idea }}",
+              "rightValue": "={{ \n  $if($('Set Variables').isExecuted, \n    $('Set Variables').item.json.idea, \n    $if($('Set Variables1').isExecuted, \n      $('Set Variables1').item.json.idea, \n      ''\n    )\n  ) \n}}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        544,
+        2704
+      ],
+      "id": "7b7f4003-7ba4-4873-a54a-8c3e128814a2",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={{(() => {\n  // 1️⃣ Folder from Data Table (Insert Drive ID)\n  const dataTable = $if($(\"Insert Drive ID\").isExecuted, $('Insert Drive ID').item.json, null);\n\n  // 2️⃣ Existing folder check\n  const existingFolder = $if($(\"Check Folder Exists\").isExecuted, $('Check Folder Exists').item.json, null);\n\n  // 3️⃣ Newly created folder\n  const newFolder = $if($(\"Create Story Folder\").isExecuted, $('Create Story Folder').item.json, null);\n\n  // Determine which to use\n  let source = \"none\";\n  let folder = {};\n\n  if (dataTable && (dataTable.Drive_Golder_ID || dataTable.folderId)) {\n    folder = dataTable;\n    source = \"datatable\";\n  } else if (existingFolder && existingFolder.id) {\n    folder = existingFolder;\n    source = \"existing\";\n  } else if (newFolder && newFolder.id) {\n    folder = newFolder;\n    source = \"created\";\n  }\n\n  return {\n    folderId: folder.Drive_Golder_ID || folder.folderId || folder.id || \"\",\n    folderName: folder.name || folder.Video_Idea || \"\",\n    from: source\n  };\n})()}}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        816,
+        2688
+      ],
+      "id": "909b351f-fde2-4857-a025-d3a30daa62dc",
+      "name": "Unified Folder Info"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://n8n.tinysaas.fun/webhook/generate-scene-images-robust",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  imgprompt1: $node[\"Loop Scenes\"].json[\"prompt1\"],\n  imgprompt2: $node[\"Loop Scenes\"].json[\"prompt2\"],\n  imgprompt3: $node[\"Loop Scenes\"].json[\"prompt3\"],\n  metadata: {\n    scene: $('Loop Scenes').item.json.sceneNumber,\n    drive_folder_id: $('Unified Folder Info').item.json.folderId\n  }\n}) }}",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -256,
+        3184
+      ],
+      "id": "0ac686bb-7437-4fc1-a1eb-e0f3f4854d71",
+      "name": "Subflow: Generate Image"
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "bucketName": "yt-scenes",
+        "folderName": "={{\n(() => {\n  const idea = $(\"Set Variables\").item.json.idea || \"story\";\n  const now = new Date();\n\n  // Create timestamp for uniqueness\n  const timestamp = now.toISOString().replace(/[:.]/g, \"-\");\n\n  // Transliterate Hindi or any Unicode text into ASCII-safe characters\n  const slug = idea\n    .normalize(\"NFD\")                      // Split characters & accents\n    .replace(/[\\u0300-\\u036f]/g, \"\")       // Remove diacritics\n    .replace(/[^\\w\\s-]/g, \"\")              // Remove symbols\n    .trim()\n    .replace(/\\s+/g, \"_\")                  // Replace spaces with underscores\n    .substring(0, 40) || \"story\";          // Limit length\n\n  // If still not safe ASCII, fallback to short hash\n  const safeSlug = /^[\\x00-\\x7F]+$/.test(slug)\n    ? slug\n    : Buffer.from(idea).toString(\"base64\").substring(0, 8);\n\n  return `${safeSlug}_${timestamp}`;\n})()\n}}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.s3",
+      "typeVersion": 1,
+      "position": [
+        1008,
+        2720
+      ],
+      "id": "19521c78-ce31-4ad3-bf47-e8d076fe81e1",
+      "name": "Create Story Folder",
+      "credentials": {
+        "s3": {
+          "id": "2xEMopykliclEARw",
+          "name": "S3 (R2 Cloudfare)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1184,
+        2512
+      ],
+      "id": "ada4fd13-fe64-4c4f-a0fd-2022f93f2e27",
+      "name": "Telegram Trigger",
+      "webhookId": "6454ff84-66d4-4bd5-8063-a0bf8b971239",
+      "credentials": {
+        "telegramApi": {
+          "id": "IKjmySZ5em3x9SYw",
+          "name": "YT-Gurukul Kahaniya"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d1a64223-12d3-475f-9988-99851d4da63a",
+              "leftValue": "={{ $('Parse Scenes').item.json.sceneNumber }}",
+              "rightValue": "={{ $('Parse Scenes').item.json.totalScenes }}",
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -704,
+        3024
+      ],
+      "id": "f375cc2b-519b-4c25-a941-c7ee99e6c8bb",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "content": "## Story & Scene Generator",
+        "height": 544,
+        "width": 1008
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        304,
+        2080
+      ],
+      "typeVersion": 1,
+      "id": "189bc068-1997-4e9c-813c-e9999bd6d1f1",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Create S3 Folder for story",
+        "height": 288,
+        "width": 1008,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        304,
+        2640
+      ],
+      "typeVersion": 1,
+      "id": "aca96baf-0db0-4f6b-ad57-94c3b1395139",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Telegram Notification & Controller",
+        "height": 912,
+        "width": 1488,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1200,
+        2080
+      ],
+      "typeVersion": 1,
+      "id": "e168275e-bc11-44aa-91bc-2ce1708d8c77",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Image Generation",
+        "height": 496,
+        "width": 1488
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1200,
+        3008
+      ],
+      "typeVersion": 1,
+      "id": "ed62a741-3148-4de1-ab38-7f4440eebe7a",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Audio Generation",
+        "height": 544,
+        "width": 1008,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        304,
+        2960
+      ],
+      "typeVersion": 1,
+      "id": "d1280046-d911-430c-ae5e-233001476818",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "operation": "deleteRows",
+        "dataTableId": {
+          "__rl": true,
+          "value": "BS3cU6fl4xJz5Z2o",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Initial URLs",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/BS3cU6fl4xJz5Z2o"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Scene",
+              "condition": "isNotEmpty"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -736,
+        2608
+      ],
+      "id": "74099bab-10a9-47c0-8b4d-439fb06bdc5d",
+      "name": "Delete row(s)",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "chatId": "=594158883",
+        "text": "Initial URL Rows Deleted ✅",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -528,
+        2608
+      ],
+      "id": "87e003b8-f7ae-429b-b1cd-e8219ac1ea4c",
+      "name": "Send a text message1",
+      "webhookId": "6a949e30-7b6e-4872-b9d8-353d18ceda95",
+      "credentials": {
+        "telegramApi": {
+          "id": "IKjmySZ5em3x9SYw",
+          "name": "YT-Gurukul Kahaniya"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following story and return exactly one word for the mood: [Happy, Sad, Action, Horror, Inspiring]. \nStory: {{ $json.output || $json.text || 'No story text provided.' }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        960,
+        2160
+      ],
+      "id": "060e40c1-0ace-464e-a325-bfe4f077e0de",
+      "name": "Mood Analyzer"
+    },
+    {
+      "parameters": {
+        "chatId": "=594158883",
+        "text": "<b>✅ All images and audios have been generated successfully!</b>  \n\n🖼️ <b>Next Steps:</b> \n\nPress <b>1️⃣</b> to <u>Render the final video</u>   \nPress <b>2️⃣</b> if you <u>don’t want to render</u>",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -256,
+        3008
+      ],
+      "id": "23032080-7141-49c3-ac84-6dac35de3436",
+      "name": "Send a text message2",
+      "webhookId": "7476ff12-c27b-49c5-ae13-cab6109b06e9",
+      "credentials": {
+        "telegramApi": {
+          "id": "IKjmySZ5em3x9SYw",
+          "name": "YT-Gurukul Kahaniya"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c21aec8e-c21d-4e88-8529-02b1e952520e",
+                    "leftValue": "={{ (() => { \n  const t = $json.message?.text?.trim() || \"\"; \n  const isHindi = /[\\u0900-\\u097F]/.test(t);\n  const notNumber = isNaN(Number(t));\n  const notHi = t.toLowerCase() !== \"hi\";\n  return Boolean(notNumber && notHi && isHindi);\n})() }}",
+                    "rightValue": "true",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Story Idea"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "65cfc767-09f7-485c-94cc-320d9d006151",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "4",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Old Story"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "1",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "0ae9a923-081f-4896-802d-ca01b4724933"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Render"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "6ca2d505-77fc-4625-9e1d-a6f43c3c31da",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "2",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Don't Render"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "538c3a62-773e-49a5-a9c8-184e872a2df0",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "3",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "New Story"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "b5f49a3b-c6d8-451c-9123-8cebc5144fda",
+                    "leftValue": "={{ $json.message.text.toLowerCase() }}",
+                    "rightValue": "hi",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Start"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "04880df2-83cf-4ee4-afc9-8474a70d886f",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "5",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Stich"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "15b29ed1-e5fd-407e-975b-0359b372863e",
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "6",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Don't Stich"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -960,
+        2416
+      ],
+      "id": "64a09b1d-c9bc-4b98-ad39-63889024ea2b",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1eed91fa-503b-4521-b712-7618fc364634",
+              "leftValue": "={{ $('Telegram Trigger').item.json.message.text }}",
+              "rightValue": "1",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -736,
+        2464
+      ],
+      "id": "d47915b5-a93c-4647-b983-8aa1a0afe03d",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "url": "https://n8n.tinysaas.fun/webhook/render-stich",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "tg_chat_id",
+              "value": "=594158883"
+            },
+            {
+              "name": "idea",
+              "value": "={{ $json.Video_Idea }}"
+            },
+            {
+              "name": "total_scenes",
+              "value": "={{ $json.Total_Scenes }}"
+            },
+            {
+              "name": "folder_id",
+              "value": "={{ $json.Drive_Golder_ID }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        112,
+        2448
+      ],
+      "id": "ce12867e-1fcb-4d77-a683-0917560cc8d5",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "chatId": "594158883",
+        "text": "<b>🤔 Is this a new story, or are you continuing an old one?\n\n</b>🆕 <b>3</b> — Start a <u>new story</u>   \n📖 <b>4</b> — Continue an <u>old story</u>",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -736,
+        2736
+      ],
+      "id": "10fc3098-e47a-4a5b-b2a1-cd1dafe26431",
+      "name": "Send a text message",
+      "webhookId": "7d97dfe1-4414-4e8b-8295-66c22f3aa47a",
+      "credentials": {
+        "telegramApi": {
+          "id": "IKjmySZ5em3x9SYw",
+          "name": "YT-Gurukul Kahaniya"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "deleteRows",
+        "dataTableId": {
+          "__rl": true,
+          "value": "pjBqBAm7fEgW0Tbi",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Final URLs",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/pjBqBAm7fEgW0Tbi"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "finalPublicUrl",
+              "condition": "isNotEmpty"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -320,
+        2608
+      ],
+      "id": "9f276000-3ba7-4f4d-adc8-5c23d3189b14",
+      "name": "Delete row(s)1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "chatId": "=594158883",
+        "text": "Final URL Rows Deleted ✅",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -96,
+        2608
+      ],
+      "id": "3da43067-5cad-49fd-ad1d-278fa430be09",
+      "name": "Send a text message3",
+      "webhookId": "bc8325bd-732d-43ff-afaa-e5adbb566d4e",
+      "credentials": {
+        "telegramApi": {
+          "id": "IKjmySZ5em3x9SYw",
+          "name": "YT-Gurukul Kahaniya"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -1184,
+        2288
+      ],
+      "id": "fed410c9-49c1-458a-af93-f8faa8c6ec8e",
+      "name": "Set Idea",
+      "webhookId": "862b3dd3-ce6d-4872-9559-f3b312741f62"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "UB98FYaYXkXvMhzz",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Controller",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/UB98FYaYXkXvMhzz"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Video_Idea",
+              "condition": "isNotEmpty"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -528,
+        2448
+      ],
+      "id": "dfd3248f-f128-4f49-a109-5feb00b06e06",
+      "name": "Get row(s)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Sort items by updatedAt descending\nconst items = $input.all().sort((a, b) => \n  new Date(b.json.updatedAt) - new Date(a.json.updatedAt)\n);\n\n// Return only the most recent one\nreturn [items[0]];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        2448
+      ],
+      "id": "3c5f7e1f-1795-4f7d-96c4-e248bb63cad3",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "chatId": "=594158883",
+        "text": "Give me story idea",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        128,
+        2608
+      ],
+      "id": "064d2c9a-c564-4058-b362-c31a25390a9c",
+      "name": "Send a text message4",
+      "webhookId": "bc8325bd-732d-43ff-afaa-e5adbb566d4e",
+      "credentials": {
+        "telegramApi": {
+          "id": "IKjmySZ5em3x9SYw",
+          "name": "YT-Gurukul Kahaniya"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "UB98FYaYXkXvMhzz",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Controller",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/UB98FYaYXkXvMhzz"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Video_Idea",
+              "condition": "isNotEmpty"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -736,
+        2304
+      ],
+      "id": "867db34f-cd27-4b2b-be50-25756a85b6e3",
+      "name": "Get row(s)1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Sort items by updatedAt descending\nconst items = $input.all().sort((a, b) => \n  new Date(b.json.updatedAt) - new Date(a.json.updatedAt)\n);\n\n// Return only the most recent one\nreturn [items[0]];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -528,
+        2304
+      ],
+      "id": "48278add-29bb-45ea-82f4-786834d21e90",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "74bafd18-5ed5-48e7-bfeb-ac8fbca5ca16",
+              "name": "tts_prompt",
+              "value": "={{ $json.Prompt }}",
+              "type": "string"
+            },
+            {
+              "id": "177b890c-7c61-4461-af28-227fa6b864e8",
+              "name": "tts_languageCode",
+              "value": "={{ $json.language_code }}",
+              "type": "string"
+            },
+            {
+              "id": "6387f5d2-b110-4b40-9d40-a27c83c0497b",
+              "name": "tts_voice_name",
+              "value": "={{ $json.voice_name }}",
+              "type": "string"
+            },
+            {
+              "id": "bdd676b0-3b52-4328-be8e-1ab683e247c4",
+              "name": "tts_model_name",
+              "value": "={{ $json.model_name }}",
+              "type": "string"
+            },
+            {
+              "id": "5ebedcde-f823-4c48-9cfd-86165edeabbc",
+              "name": "idea",
+              "value": "={{ $('Code in JavaScript1').item.json.Video_Idea }}",
+              "type": "string"
+            },
+            {
+              "id": "56a3607a-2993-475a-bfc6-95e6562015a4",
+              "name": "tg_chat_id",
+              "value": "=594158883",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -96,
+        2304
+      ],
+      "id": "8de2b8f3-bc3c-44ce-9fde-8105eb5be9a0",
+      "name": "Set Variables1"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "KGI1D2fgu6LLSU2u",
+          "mode": "list",
+          "cachedResultName": "YT Automate Settings",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/KGI1D2fgu6LLSU2u"
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -736,
+        2160
+      ],
+      "id": "d7dabbcf-caa3-48b7-84d2-32a49393610a",
+      "name": "TTS/Image Settings1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "74bafd18-5ed5-48e7-bfeb-ac8fbca5ca16",
+              "name": "tts_prompt",
+              "value": "={{ $json.Prompt }}",
+              "type": "string"
+            },
+            {
+              "id": "177b890c-7c61-4461-af28-227fa6b864e8",
+              "name": "tts_languageCode",
+              "value": "={{ $json.language_code }}",
+              "type": "string"
+            },
+            {
+              "id": "6387f5d2-b110-4b40-9d40-a27c83c0497b",
+              "name": "tts_voice_name",
+              "value": "={{ $json.voice_name }}",
+              "type": "string"
+            },
+            {
+              "id": "bdd676b0-3b52-4328-be8e-1ab683e247c4",
+              "name": "tts_model_name",
+              "value": "={{ $json.model_name }}",
+              "type": "string"
+            },
+            {
+              "id": "5ebedcde-f823-4c48-9cfd-86165edeabbc",
+              "name": "idea",
+              "value": "={{ $('Telegram Trigger').item.json.message.text }}",
+              "type": "string"
+            },
+            {
+              "id": "56a3607a-2993-475a-bfc6-95e6562015a4",
+              "name": "tg_chat_id",
+              "value": "=594158883",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -528,
+        2160
+      ],
+      "id": "5f8089cb-dff5-400c-be7f-2b16cf6790b9",
+      "name": "Set Variables"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "UB98FYaYXkXvMhzz",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Controller",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/UB98FYaYXkXvMhzz"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Video_Idea",
+              "keyValue": "={{ $('Unified Folder Info').item.json.folderName }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Total_Scenes": "={{ $('Parse Scenes').item.json.totalScenes }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Video_Idea",
+              "displayName": "Video_Idea",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Drive_Golder_ID",
+              "displayName": "Drive_Golder_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Start_Render",
+              "displayName": "Start_Render",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Start_Merge",
+              "displayName": "Start_Merge",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Total_Scenes",
+              "displayName": "Total_Scenes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -464,
+        3008
+      ],
+      "id": "ff570fba-c91f-471b-8c1b-a7b7de21a87e",
+      "name": "Update row(s)"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "UB98FYaYXkXvMhzz",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Controller",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/UB98FYaYXkXvMhzz"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Video_Idea",
+              "keyValue": "={{ $json.Video_Idea }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Start_Render": "Yes",
+            "Start_Merge": "No"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Video_Idea",
+              "displayName": "Video_Idea",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Drive_Golder_ID",
+              "displayName": "Drive_Golder_ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Start_Render",
+              "displayName": "Start_Render",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Start_Merge",
+              "displayName": "Start_Merge",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Total_Scenes",
+              "displayName": "Total_Scenes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -112,
+        2448
+      ],
+      "id": "8319e3af-31aa-4289-855f-e459f0cefd7e",
+      "name": "Update row(s)1"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "UB98FYaYXkXvMhzz",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Controller",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/UB98FYaYXkXvMhzz"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Video_Idea",
+              "condition": "isNotEmpty"
+            }
+          ]
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        -736,
+        2880
+      ],
+      "id": "3abc343d-26df-48e3-9e0e-38a31b7f01de",
+      "name": "Get row(s)2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Sort items by updatedAt descending\nconst items = $input.all().sort((a, b) => \n  new Date(b.json.updatedAt) - new Date(a.json.updatedAt)\n);\n\n// Return only the most recent one\nreturn [items[0]];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -528,
+        2880
+      ],
+      "id": "6fbbac52-7c54-4089-a132-127453d8d5cc",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "url": "https://n8n.tinysaas.fun/webhook/stich",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "folder_id",
+              "value": "={{ $json.Drive_Golder_ID }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -320,
+        2880
+      ],
+      "id": "640506a4-26b0-4f43-8d91-75ab42032fbc",
+      "name": "HTTP Request1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Parse Scenes": {
+      "main": [
+        [
+          {
+            "node": "Loop Scenes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Script Writer AI": {
+      "main": [
+        [
+          {
+            "node": "Mood Analyzer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Character Designer": {
+      "main": [
+        [
+          {
+            "node": "Script Writer AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Character Designer",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Script Writer AI",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Mood Analyzer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "Character Designer",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Script Writer AI",
+            "type": "ai_memory",
+            "index": 0
+          },
+          {
+            "node": "Mood Analyzer",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Scenes": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Track Progress",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image Exist?": {
+      "main": [
+        [
+          {
+            "node": "Subflow: Generate Image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Audio Exist?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Audio Exist?": {
+      "main": [
+        [
+          {
+            "node": "Subflow: Google TTS",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Downloadable URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Downloadable URL": {
+      "main": [
+        [
+          {
+            "node": "Update URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subflow: Google TTS": {
+      "main": [
+        [
+          {
+            "node": "Create Downloadable URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TTS/Image Settings": {
+      "main": [
+        [
+          {
+            "node": "Set Variables1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Track Progress": {
+      "main": [
+        [
+          {
+            "node": "Image Exist?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update URLs": {
+      "main": [
+        [
+          {
+            "node": "Loop Scenes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Downloadable Image URL": {
+      "main": [
+        [
+          {
+            "node": "Update Image URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Image URLs": {
+      "main": [
+        [
+          {
+            "node": "Audio Exist?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Drive ID": {
+      "main": [
+        [
+          {
+            "node": "Unified Folder Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Folder Exists": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Unified Folder Info",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Story Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Unified Folder Info": {
+      "main": [
+        [
+          {
+            "node": "Parse Scenes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subflow: Generate Image": {
+      "main": [
+        [
+          {
+            "node": "Create Downloadable Image URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Story Folder": {
+      "main": [
+        [
+          {
+            "node": "Insert Drive ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Update row(s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete row(s)": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message1": {
+      "main": [
+        [
+          {
+            "node": "Delete row(s)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mood Analyzer": {
+      "main": [
+        [
+          {
+            "node": "Check Folder Exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message2": {
+      "main": [
+        []
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Get row(s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "TTS/Image Settings1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get row(s)1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [],
+        [
+          {
+            "node": "Delete row(s)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get row(s)2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Delete row(s)1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message3": {
+      "main": [
+        [
+          {
+            "node": "Send a text message4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Idea": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s)": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Update row(s)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message4": {
+      "main": [
+        []
+      ]
+    },
+    "Get row(s)1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "TTS/Image Settings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Variables1": {
+      "main": [
+        [
+          {
+            "node": "Character Designer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TTS/Image Settings1": {
+      "main": [
+        [
+          {
+            "node": "Set Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Variables": {
+      "main": [
+        [
+          {
+            "node": "Character Designer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row(s)": {
+      "main": [
+        [
+          {
+            "node": "Send a text message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row(s)1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s)2": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "e738a74f-dc70-4aab-ba2e-b15edff9d46a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "26999db1e681e6a87364716419329ff310f36bdcdb3a6fae594cdba3a86aed90"
+  },
+  "id": "DXHocZO4GFNRJ0VH",
+  "tags": []
+}
