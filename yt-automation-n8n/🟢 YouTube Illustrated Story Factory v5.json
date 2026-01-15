@@ -25,8 +25,8 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        -672,
-        2960
+        -496,
+        3008
       ],
       "id": "24362ba9-adf8-410c-a0de-a7e62458c9c8",
       "name": "Loop Scenes"
@@ -40,8 +40,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1632,
-        3008
+        1840,
+        3056
       ],
       "id": "1c341fbb-e1f8-4eb3-b67a-96f783003941",
       "name": "Create Downloadable URL"
@@ -59,7 +59,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        1376,
+        1584,
         2896
       ],
       "id": "9fe889e8-698a-4e67-b56a-892fe1b27341",
@@ -87,8 +87,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        -464,
-        2976
+        -208,
+        3024
       ],
       "id": "0543659e-faf7-44b4-9532-1c0cc4225340",
       "name": "Track Progress",
@@ -201,8 +201,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2080,
-        3008
+        2288,
+        3056
       ],
       "id": "1fe2999e-deaf-444d-af94-194beac44d4f",
       "name": "Update URLs",
@@ -217,8 +217,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        448,
-        2992
+        736,
+        2928
       ],
       "id": "fccfacdf-8b15-4fb6-9c1f-bd361b191726",
       "name": "Create Downloadable Image URL"
@@ -331,8 +331,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        816,
-        2992
+        1024,
+        2928
       ],
       "id": "eddcf4ba-28aa-4acb-92c1-cef722312c13",
       "name": "Update Image URLs",
@@ -474,7 +474,7 @@
         "url": "https://n8n.tinysaas.fun/webhook/generate-scene-images-robust",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\n  imgprompt1: $node[\"Loop Scenes\"].json[\"prompt1\"],\n  imgprompt2: $node[\"Loop Scenes\"].json[\"prompt2\"],\n  imgprompt3: $node[\"Loop Scenes\"].json[\"prompt3\"],\n  metadata: {\n    scene: $('Loop Scenes').item.json.sceneNumber,\n    drive_folder_id: $('Unified Folder Info').item.json.folderId\n  }\n}) }}\n\n",
+        "jsonBody": "={{ $json }}",
         "options": {
           "redirect": {
             "redirect": {}
@@ -484,8 +484,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        160,
-        2992
+        480,
+        2928
       ],
       "id": "b8ff7e9e-9a13-4611-b9e9-2ee943d904c0",
       "name": "Subflow: Generate Image"
@@ -539,7 +539,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -768,
+        -560,
         2656
       ],
       "id": "41fbaf51-e79c-47bb-a964-69aae70ab914",
@@ -564,7 +564,7 @@
       "parameters": {
         "content": "## Create S3 Folder for story",
         "height": 320,
-        "width": 2224,
+        "width": 2432,
         "color": 6
       },
       "type": "n8n-nodes-base.stickyNote",
@@ -596,7 +596,7 @@
       "parameters": {
         "content": "## Image Generation",
         "height": 304,
-        "width": 1520
+        "width": 1728
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
@@ -611,7 +611,7 @@
       "parameters": {
         "content": "## Audio Generation",
         "height": 304,
-        "width": 2224,
+        "width": 2432,
         "color": 3
       },
       "type": "n8n-nodes-base.stickyNote",
@@ -656,7 +656,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        -128,
+        80,
         2640
       ],
       "id": "4cee0f68-6ad4-43ba-a12f-49fb6b2b9d78",
@@ -685,7 +685,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        -544,
+        -336,
         2640
       ],
       "id": "6776f69b-e9dc-48dd-b206-877c5d01d048",
@@ -698,7 +698,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -352,
+        -144,
         2640
       ],
       "id": "72c61c87-fcc5-498c-90a0-4d8ed36f98e7",
@@ -738,7 +738,7 @@
       "parameters": {
         "content": "## Calling Render Subflow",
         "height": 320,
-        "width": 1520,
+        "width": 1728,
         "color": 5
       },
       "type": "n8n-nodes-base.stickyNote",
@@ -802,7 +802,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        80,
+        288,
         2640
       ],
       "id": "5e17b414-ba40-425e-899e-02e096dd7974",
@@ -971,7 +971,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        352,
+        560,
         2640
       ],
       "id": "d62f63d4-ed17-4b22-9eac-83b873f42f86",
@@ -1006,7 +1006,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        -544,
+        -336,
         2800
       ],
       "id": "5c1007ee-3214-4b5c-975c-50f0215ff5fc",
@@ -1020,7 +1020,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -352,
+        -144,
         2800
       ],
       "id": "c80e58b1-7708-4c3c-96f8-7ddce99605c7",
@@ -1046,7 +1046,7 @@
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
       "position": [
-        -128,
+        80,
         2800
       ],
       "id": "4cd89147-1419-46cb-b90e-5b81491f96be",
@@ -1225,7 +1225,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        80,
+        288,
         2800
       ],
       "id": "c658f4be-abd0-49af-905c-d700254bf9bf",
@@ -1450,7 +1450,7 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        224,
+        208,
         2032
       ],
       "id": "8bbc4c79-9347-47f6-bddd-4b1d43170827",
@@ -1562,7 +1562,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=Character Profile: {{ (() => {\n  try {\n    // Prefer live Character Designer output\n    if ($('Character Designer').isExecuted) {\n      return $('Character Designer').item.json.output || '';\n    }\n    // Fallback: fetch from Data Table (if Character Designer skipped)\n    const tableData = $if($('Get row(s)1').isExecuted, $('Get row(s)1').item.json, {});\n    return tableData['Character_Designer'] || tableData['output'] || '';\n  } catch (e) {\n    return 'No character profile found.';\n  }\n})() }}\n\nArt Style: {{ $('Set Variables').item.json.art_style }}\n\nTask: Using the Character Profile above, generate 3 English prompts for each scene in the following script:\n\n{{ (() => {\n  try {\n    // Prefer live Narrative Screenwriter output\n    if ($('The Narrative Screenwriter').isExecuted) {\n      return $('The Narrative Screenwriter').item.json.output || '';\n    }\n    // Fallback: fetch from Data Table (if Screenwriter skipped)\n    const tableData = $if($('Get row(s)1').isExecuted, $('Get row(s)1').item.json, {});\n    return tableData['The_Narrative_Screenwriter'] || tableData['output'] || '';\n  } catch (e) {\n    return 'No script found.';\n  }\n})() }}",
+        "text": "=Character Profile: {{ (() => {\n  try {\n    // ✅ 1️⃣ Prefer live Character Designer output\n    if ($('Character Designer').isExecuted) {\n      return $('Character Designer').item.json.output || '';\n    }\n\n    // ✅ 2️⃣ Try Get row(s)1 first\n    let tableData = {};\n    if ($('Get row(s)1').isExecuted && $('Get row(s)1').first()?.json) {\n      tableData = $('Get row(s)1').first().json;\n    }\n\n    // ✅ 3️⃣ If Get row(s)1 has no usable data, fallback to Get row(s)7\n    if (\n      (!tableData['Character_Designer'] && !tableData['output']) &&\n      $('Get row(s)7').isExecuted && $('Get row(s)7').first()?.json\n    ) {\n      tableData = $('Get row(s)7').first().json;\n    }\n\n    // ✅ 4️⃣ Return whichever is available\n    return (\n      tableData['Character_Designer'] ||\n      tableData['The_Character_Designer'] ||\n      tableData['output'] ||\n      'No character profile found.'\n    );\n  } catch (e) {\n    return 'No character profile found.';\n  }\n})() }}\n\nArt Style: {{ $('Set Variables').item.json.art_style }}\n\nTask: Using the Character Profile above, generate 3 English prompts for each scene in the following script:\n\n{{ (() => {\n  try {\n    // Prefer live Narrative Screenwriter output\n    if ($('The Narrative Screenwriter').isExecuted) {\n      return $('The Narrative Screenwriter').item.json.output || '';\n    }\n    // Fallback: fetch from Data Table (if Screenwriter skipped)\n    const tableData = $if($('Get row(s)7').isExecuted, $('Get row(s)7').item.json, {});\n    return tableData['The_Narrative_Screenwriter'] || tableData['output'] || '';\n  } catch (e) {\n    return 'No script found.';\n  }\n})() }}",
         "options": {
           "systemMessage": "You are a Technical Production Assistant. \nYour ONLY job is to take the provided script and add English image prompts.\n\nOUTPUT FORMAT (STRICT):\n- No introductory text. \n- No concluding text.\n- Keep the Hindi Narration EXACTLY as provided.\n- Below each Narration, add:\n  Prompt 1: [Wide shot description]\n  Prompt 2: [Medium shot description]\n  Prompt 3: [Close-up shot description]"
         }
@@ -1663,8 +1663,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -272,
-        2976
+        -752,
+        3008
       ],
       "id": "3d802ac0-a97a-4c2c-ad30-fd4851d4a8ae",
       "name": "Parse Scenes"
@@ -1933,8 +1933,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -64,
-        2976
+        16,
+        3024
       ],
       "id": "5c453f47-c906-4f61-8602-cf6ee8950fee",
       "name": "Image Exist?"
@@ -1977,8 +1977,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1088,
-        2992
+        1296,
+        3040
       ],
       "id": "2d600b44-7c34-4008-8a3b-67fd8c960431",
       "name": "Audio Exist?"
@@ -2480,7 +2480,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2160,
+        2128,
         2080
       ],
       "id": "1180d28c-2ed9-450a-8d25-b903e7ad0514",
@@ -3691,6 +3691,47 @@
       ],
       "id": "df1f3221-561d-41d9-b319-64314b55e406",
       "name": "Insert row3"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "r7uoOpmWnpj5QIrY",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Metadata",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/r7uoOpmWnpj5QIrY"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idea",
+              "keyValue": "={{ $('Update row in sheet1').item.json.idea }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2288,
+        2032
+      ],
+      "id": "89ee6316-3b99-4d66-b4e5-b4a6c11287ba",
+      "name": "Get row(s)7"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ✅ Always pull scene data directly from \"Loop Scenes\"\nconst scene = $node[\"Loop Scenes\"].json;\nconst folderId = $node[\"Unified Folder Info\"].json.folderId || \"\";\n\nreturn {\n  json: {\n    imgprompt1: scene.prompt1 || \"\",\n    imgprompt2: scene.prompt2 || \"\",\n    imgprompt3: scene.prompt3 || \"\",\n    metadata: {\n      scene: scene.sceneNumber || 0,\n      drive_folder_id: scene.folderId || folderId,\n      story_id: scene.story_id || \"\"\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        304,
+        2928
+      ],
+      "id": "c484217a-6a9f-4d19-865d-d95f838f0f80",
+      "name": "Build Image Payload"
     }
   ],
   "pinData": {
@@ -3980,7 +4021,7 @@
       "main": [
         [
           {
-            "node": "The Visual Director",
+            "node": "Get row(s)7",
             "type": "main",
             "index": 0
           }
@@ -4156,7 +4197,7 @@
       "main": [
         [
           {
-            "node": "Get row(s) in sheet",
+            "node": "Update row in sheet1",
             "type": "main",
             "index": 0
           }
@@ -4319,7 +4360,7 @@
       "main": [
         [
           {
-            "node": "Subflow: Generate Image",
+            "node": "Build Image Payload",
             "type": "main",
             "index": 0
           }
@@ -4760,14 +4801,36 @@
           }
         ]
       ]
+    },
+    "Get row(s)7": {
+      "main": [
+        [
+          {
+            "node": "The Visual Director",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Image Payload": {
+      "main": [
+        [
+          {
+            "node": "Subflow: Generate Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "availableInMCP": false
   },
-  "versionId": "4f396ca3-b6c2-4617-9f26-522cfcad9e5d",
+  "versionId": "5e6f190c-3a17-4d88-b167-1b80705876ad",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "26999db1e681e6a87364716419329ff310f36bdcdb3a6fae594cdba3a86aed90"
