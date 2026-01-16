@@ -12,7 +12,7 @@
       "typeVersion": 2.1,
       "position": [
         0,
-        -352
+        -272
       ],
       "id": "960297b9-e912-471a-9136-30e2512a2ab3",
       "name": "Webhook",
@@ -27,8 +27,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1472,
-        -368
+        1696,
+        -288
       ],
       "id": "e43945f3-dbe0-4c17-9154-63703e47a55f",
       "name": "Respond to Webhook"
@@ -62,8 +62,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        800,
-        -208
+        1040,
+        -128
       ],
       "id": "5f628038-09a7-4a8d-b7a3-f25433aa3a4a",
       "name": "Google TTS Engine",
@@ -81,8 +81,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1008,
-        -208
+        1248,
+        -128
       ],
       "id": "d26064b8-d94c-485e-be21-272468fb6e20",
       "name": "Base64 to Binary"
@@ -97,8 +97,8 @@
       "type": "n8n-nodes-base.s3",
       "typeVersion": 1,
       "position": [
-        1248,
-        -368
+        1472,
+        -288
       ],
       "id": "a097771f-8c59-4c9d-bafb-776ae65304c8",
       "name": "Upload Audio",
@@ -117,7 +117,7 @@
       "typeVersion": 1,
       "position": [
         304,
-        -128
+        -48
       ],
       "id": "af717311-c913-483e-9a01-d86b8920eb89",
       "name": "Google Gemini Chat Model",
@@ -140,7 +140,7 @@
       "typeVersion": 3.1,
       "position": [
         224,
-        -352
+        -272
       ],
       "id": "951c3284-fafb-40d0-90d4-89d2b6c0cf21",
       "name": "Safety Refiner",
@@ -180,8 +180,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        1008,
-        -368
+        1040,
+        -288
       ],
       "id": "d79d67ad-6c1a-4471-b8bb-61dfcbe73c4c",
       "name": "Azure TTS"
@@ -214,55 +214,28 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        576,
-        -352
+        800,
+        -272
       ],
       "id": "1fc0d1db-fada-46ac-bcb9-44a00cc416dc",
       "name": "If"
+    },
+    {
+      "parameters": {
+        "amount": 15
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        576,
+        -272
+      ],
+      "id": "2bb4ec93-571b-43c6-86eb-460bcd1794c5",
+      "name": "Wait",
+      "webhookId": "8048a06e-3a6b-4047-966c-8d93bff2cfca"
     }
   ],
-  "pinData": {
-    "Webhook": [
-      {
-        "json": {
-          "headers": {
-            "host": "n8n.tinysaas.fun",
-            "user-agent": "axios/1.12.0",
-            "content-length": "1030",
-            "accept": "application/json,text/html,application/xhtml+xml,application/xml,text/*;q=0.9, image/*;q=0.8, */*;q=0.7",
-            "accept-encoding": "gzip, compress, deflate, br",
-            "content-type": "application/json",
-            "x-forwarded-for": "10.0.1.1",
-            "x-forwarded-host": "n8n.tinysaas.fun",
-            "x-forwarded-port": "443",
-            "x-forwarded-proto": "https",
-            "x-forwarded-server": "be92d452a53d",
-            "x-real-ip": "10.0.1.1"
-          },
-          "params": {},
-          "query": {},
-          "body": {
-            "text": "एक समय की बात है, एक हलचल भरे शहर के शोरगुल में, रिया नाम की एक लड़की रहती थी। उसका सपना था एक सफल लेखिका बनने का, लेकिन उसके हर दिन की चुनौतियाँ उसे अपनी धुन से भटका रही थीं। उसकी डायरी के पन्ने खाली पड़े थे, और रचनात्मकता का झरना मानो सूख सा गया था। वह हर सुबह एक नई कहानी की तलाश में उठती, पर निराशा ही हाथ लगती।",
-            "prompt": "Say the following like you are narrating a story",
-            "voice_config": {
-              "languageCode": "en-us",
-              "name": "Kore",
-              "model_name": "gemini-2.5-flash-tts"
-            },
-            "metadata": {
-              "scene": 1,
-              "drive_folder_id": "story_2026-01-09T16-51-52-960Z"
-            }
-          },
-          "webhookUrl": "https://n8n.tinysaas.fun/webhook/generate-story-voice",
-          "executionMode": "production"
-        },
-        "pairedItem": {
-          "item": 0
-        }
-      }
-    ]
-  },
+  "pinData": {},
   "connections": {
     "Webhook": {
       "main": [
@@ -324,7 +297,7 @@
       "main": [
         [
           {
-            "node": "If",
+            "node": "Wait",
             "type": "main",
             "index": 0
           }
@@ -359,6 +332,17 @@
           }
         ]
       ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -366,7 +350,7 @@
     "executionOrder": "v1",
     "availableInMCP": false
   },
-  "versionId": "2c56ef23-015a-451d-8389-5ce349158235",
+  "versionId": "ea618390-0e40-47f9-a039-dee7afe370e9",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "26999db1e681e6a87364716419329ff310f36bdcdb3a6fae594cdba3a86aed90"

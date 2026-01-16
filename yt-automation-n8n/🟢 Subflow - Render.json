@@ -38,13 +38,14 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        64,
-        -448
+        -544,
+        -880
       ],
       "id": "2f0d88dc-2675-445e-a927-618f1f89d13b",
       "name": "Render Scene Video",
       "retryOnFail": true,
-      "waitBetweenTries": 5000
+      "waitBetweenTries": 5000,
+      "disabled": true
     },
     {
       "parameters": {
@@ -103,7 +104,7 @@
       "typeVersion": 2.3,
       "position": [
         -688,
-        -432
+        -352
       ],
       "id": "878cb3bd-2c58-458a-8167-3ece050d44e9",
       "name": "If3"
@@ -113,7 +114,6 @@
         "operation": "upload",
         "bucketName": "yt-scenes",
         "fileName": "={{ $('Webhook').item.json.body.folder_id }}/Rendered/{{ $('Loop Over Items').item.json.Scene }}.mp4",
-        "binaryPropertyName": "video",
         "additionalFields": {}
       },
       "type": "n8n-nodes-base.s3",
@@ -185,7 +185,7 @@
       "typeVersion": 1.1,
       "position": [
         -896,
-        -432
+        -352
       ],
       "id": "b27b0f2a-7fde-4f4b-b954-3d7dbc244ddd",
       "name": "Check Final URL Exist",
@@ -371,7 +371,7 @@
     },
     {
       "parameters": {
-        "amount": 15
+        "amount": 30
       },
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
@@ -423,7 +423,7 @@
     },
     {
       "parameters": {
-        "url": "=https://8f668f75dfb3.ngrok-free.app/download/{{ $json.job_id }}",
+        "url": "=http://f8o844sc0oocgckwswsc8s8g.82.180.147.16.sslip.io/download/{{ $json.job_id }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -442,7 +442,9 @@
         -224
       ],
       "id": "c9f17df5-7c44-4fb4-ac7d-ebf078854c67",
-      "name": "HTTP Request1"
+      "name": "HTTP Request1",
+      "alwaysOutputData": true,
+      "retryOnFail": true
     },
     {
       "parameters": {
@@ -479,13 +481,14 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        -304,
-        -208
+        -768,
+        -896
       ],
       "id": "ac60b06a-dd64-4910-a225-f2b679a1e555",
       "name": "Render Scene [Local]1",
       "retryOnFail": true,
-      "waitBetweenTries": 5000
+      "waitBetweenTries": 5000,
+      "disabled": true
     },
     {
       "parameters": {
@@ -512,7 +515,7 @@
     },
     {
       "parameters": {
-        "url": "=https://8f668f75dfb3.ngrok-free.app/jobs/{{ $json.job_id }}",
+        "url": "=http://f8o844sc0oocgckwswsc8s8g.82.180.147.16.sslip.io/job_status/{{ $json.job_id }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -531,12 +534,13 @@
         -208
       ],
       "id": "7eb48c95-6117-4be4-86c8-f438e138235d",
-      "name": "HTTP Request2"
+      "name": "HTTP Request2",
+      "alwaysOutputData": true,
+      "retryOnFail": true
     },
     {
       "parameters": {
-        "amount": 0.5,
-        "unit": "minutes"
+        "amount": 90
       },
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
@@ -581,19 +585,88 @@
       ],
       "id": "604b2c3b-cf07-4bf2-8b45-fd0d5c9edc17",
       "name": "If1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://f8o844sc0oocgckwswsc8s8g.82.180.147.16.sslip.io/render_scene_v3_subtitles",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "=json",
+        "specifyBody": "json",
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "jsonBody": "={{\nJSON.stringify({\n  \"scene\": $('Loop Over Items').item.json.Scene || \"Unknown\",\n  \"image_urls\": [\n    $('Loop Over Items').item.json.imagePublicUrl || \"https://placehold.co/1280x720?text=Image1+Missing\",\n    $('Loop Over Items').item.json.imagePublicUrl2 || \"https://placehold.co/1280x720?text=Image2+Missing\",\n    $('Loop Over Items').item.json.imagePublicUrl3 || \"https://placehold.co/1280x720?text=Image3+Missing\"\n  ],\n  \"audio_url\": $('Loop Over Items').item.json.audioPublicUrl || \"None\",\n  \"bgm_url\": $('Map BGM to Mood').item.json.bgm_url\n})\n}}",
+        "options": {
+          "redirect": {
+            "redirect": {}
+          },
+          "timeout": 900000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -336,
+        -208
+      ],
+      "id": "4218182e-c539-4231-8180-c5533ef8f5a1",
+      "name": "Render Scene Video1",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
     }
   ],
-  "pinData": {},
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n.tinysaas.fun",
+            "user-agent": "axios/1.12.0",
+            "content-length": "165",
+            "accept": "application/json,text/html,application/xhtml+xml,application/xml,text/*;q=0.9, image/*;q=0.8, */*;q=0.7",
+            "accept-encoding": "gzip, compress, deflate, br",
+            "content-type": "application/json",
+            "x-forwarded-for": "10.0.1.1",
+            "x-forwarded-host": "n8n.tinysaas.fun",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "be92d452a53d",
+            "x-real-ip": "10.0.1.1"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "tg_chat_id": "594158883",
+            "idea": "राजा की जादुई पतंग",
+            "total_scenes": 6,
+            "folder_id": "story_2026-01-14T05-39-27-783Z",
+            "mood": "Inspiring"
+          },
+          "webhookUrl": "https://n8n.tinysaas.fun/webhook/render-stich",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
   "connections": {
     "Render Scene Video": {
       "main": [
-        [
-          {
-            "node": "Upload a file",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Loop Over Items": {
@@ -740,7 +813,7 @@
       "main": [
         [
           {
-            "node": "Render Scene Video",
+            "node": "Render Scene Video1",
             "type": "main",
             "index": 0
           }
@@ -760,13 +833,7 @@
     },
     "Render Scene [Local]1": {
       "main": [
-        [
-          {
-            "node": "Edit Fields1",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Edit Fields1": {
@@ -830,6 +897,17 @@
           }
         ]
       ]
+    },
+    "Render Scene Video1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -837,7 +915,7 @@
     "executionOrder": "v1",
     "availableInMCP": false
   },
-  "versionId": "7a050122-a5ae-41ef-86e0-5f63a2b01974",
+  "versionId": "9a0e8174-b41d-4f8a-91b2-0ebbf12fed92",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "26999db1e681e6a87364716419329ff310f36bdcdb3a6fae594cdba3a86aed90"

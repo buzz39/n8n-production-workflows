@@ -1442,9 +1442,9 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=You are a legendary Hindi Novelist and Screenwriter.\n\nTarget Language: {{ $('Set Variables').item.json.target_language }}\n\nTask:\nTake the storyboard from the Strategist and expand it into a DEEP, DESCRIPTIVE screenplay-style narrative\nfollowing the format below:\n\nFORMAT:\nScene 1\nNarration: [Descriptive text]\nScene 2\nNarration: [Descriptive text]\n...\nScene 6\nNarration: [Descriptive text]",
+        "text": "=You are a legendary Hindi Novelist and Screenwriter.\n\nTarget Language: {{ $('Set Variables').item.json.target_language }}\n\nTask:\nTake the storyboard from the Strategist and expand it into a DEEP, DESCRIPTIVE screenplay-style narrative\nfollowing the format below:\n\nFORMAT:\nScene 1\nNarration: [Descriptive text]\nScene 2\nNarration: [Descriptive text]\n...\nScene 10\nNarration: [Descriptive text]",
         "options": {
-          "systemMessage": "You are a professional Hindi novelist and screenwriter with mastery in cinematic storytelling.\n\nRules for scene generation:\n1. There must be exactly SIX scenes in total.\n2. Each scene must be labeled clearly as:\n   Scene 1\n   Narration:\n3. Each scene must contain 2–3 long descriptive paragraphs.\n4. Each paragraph should total about 80–120 words, for 200–300 words per scene.\n5. Focus on rich sensory description (smells, sounds, colors, internal emotion).\n6. Use natural conversational Hindi (\"Bol-chaal\" style) – not formal or robotic.\n7. Each scene continues the same story logically; do not restart or summarize.\n8. Scene 2 must include: \n   \"कहानी आगे बढ़ाने से पहले, मुझे कमेंट्स में बताएं कि आप यह कहानी किस शहर से सुन रहे हैं? आपके जवाब का इंतज़ार रहेगा।\"\n9. Continue generating until all six scenes are complete."
+          "systemMessage": "You are a professional Hindi novelist and screenwriter with mastery in cinematic storytelling.\n\nRules for scene generation:\n1. There must be exactly TEN scenes in total.\n2. Each scene must be labeled clearly as:\n   Scene 1\n   Narration:\n3. Each scene must contain 2–3 long descriptive paragraphs.\n4. Each paragraph should total about 80–120 words, for 200–300 words per scene.\n5. Focus on rich sensory description (smells, sounds, colors, internal emotion).\n6. Use natural conversational Hindi (\"Bol-chaal\" style) – not formal or robotic.\n7. Each scene continues the same story logically; do not restart or summarize.\n8. Scene 2 must include: \n   \"कहानी आगे बढ़ाने से पहले, मुझे कमेंट्स में बताएं कि आप यह कहानी किस शहर से सुन रहे हैं? आपके जवाब का इंतज़ार रहेगा।\"\n9. Continue generating until all ten scenes are complete."
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
@@ -1564,7 +1564,7 @@
         "promptType": "define",
         "text": "=Character Profile: {{ (() => {\n  try {\n    // ✅ 1️⃣ Prefer live Character Designer output\n    if ($('Character Designer').isExecuted) {\n      return $('Character Designer').item.json.output || '';\n    }\n\n    // ✅ 2️⃣ Try Get row(s)1 first\n    let tableData = {};\n    if ($('Get row(s)1').isExecuted && $('Get row(s)1').first()?.json) {\n      tableData = $('Get row(s)1').first().json;\n    }\n\n    // ✅ 3️⃣ If Get row(s)1 has no usable data, fallback to Get row(s)7\n    if (\n      (!tableData['Character_Designer'] && !tableData['output']) &&\n      $('Get row(s)7').isExecuted && $('Get row(s)7').first()?.json\n    ) {\n      tableData = $('Get row(s)7').first().json;\n    }\n\n    // ✅ 4️⃣ Return whichever is available\n    return (\n      tableData['Character_Designer'] ||\n      tableData['The_Character_Designer'] ||\n      tableData['output'] ||\n      'No character profile found.'\n    );\n  } catch (e) {\n    return 'No character profile found.';\n  }\n})() }}\n\nArt Style: {{ $('Set Variables').item.json.art_style }}\n\nTask: Using the Character Profile above, generate 3 English prompts for each scene in the following script:\n\n{{ (() => {\n  try {\n    // Prefer live Narrative Screenwriter output\n    if ($('The Narrative Screenwriter').isExecuted) {\n      return $('The Narrative Screenwriter').item.json.output || '';\n    }\n    // Fallback: fetch from Data Table (if Screenwriter skipped)\n    const tableData = $if($('Get row(s)7').isExecuted, $('Get row(s)7').item.json, {});\n    return tableData['The_Narrative_Screenwriter'] || tableData['output'] || '';\n  } catch (e) {\n    return 'No script found.';\n  }\n})() }}",
         "options": {
-          "systemMessage": "You are a Technical Production Assistant. \nYour ONLY job is to take the provided script and add English image prompts.\n\nOUTPUT FORMAT (STRICT):\n- No introductory text. \n- No concluding text.\n- Keep the Hindi Narration EXACTLY as provided.\n- Below each Narration, add:\n  Prompt 1: [Wide shot description]\n  Prompt 2: [Medium shot description]\n  Prompt 3: [Close-up shot description]"
+          "systemMessage": "You are a Technical Production Assistant.\nYour ONLY job is to take the provided script and add English image prompts.\n\nOUTPUT FORMAT (STRICT):\n- No introductory text.\n- No concluding text.\n- Keep the Hindi Narration EXACTLY as provided.\n- Below each Narration, add exactly three prompts:\n  Prompt 1: [Wide shot description]\n  Prompt 2: [Medium shot description]\n  Prompt 3: [Close-up shot description]\n- After each \"Prompt 3\", insert ONE completely empty line before the next scene begins.\n- Every new scene must start with \"Narration:\" exactly as written.\n- The pattern should look like this:\n\nNarration: <Hindi text here>\nPrompt 1: <English text>\nPrompt 2: <English text>\nPrompt 3: <English text>\n\nNarration: <Hindi text here>\nPrompt 1: <English text>\nPrompt 2: <English text>\nPrompt 3: <English text>\n\n- No other formatting, explanations, or markdown symbols.\n- Ensure there is always a newline between scenes, even at the end of the text."
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
@@ -1658,7 +1658,7 @@
     },
     {
       "parameters": {
-        "jsCode": "/**\n * 🎬 VISUAL DIRECTOR PARSER v11.0 — Unified Regex Build\n * ✅ Always reads from Get row(s)6 → The_Visual_Director\n * ✅ Extracts Narration + Prompts via a single regex\n * ✅ Cleans stray styles and labels safely\n * ✅ Limits total scenes to 6\n * ✅ Returns n8n-ready JSON array\n */\n\nconst GLOBAL_STYLE =\n  \"-- Style: Cinematic matte painting, emotional atmosphere, visible brushstrokes, impasto texture, warm candlelight glow, ultra-detailed, 8k, Indian setting, volumetric lighting --ar 16:9 --v 6.0\";\n\n// 1️⃣ Always read from Get row(s)6\nlet rawText = \"\";\ntry {\n  const src = $('Get row(s)6').first().json;\n  rawText = src?.The_Visual_Director || \"\";\n} catch (e) {\n  throw new Error(\"❌ Could not read Get row(s)6 → The_Visual_Director\");\n}\n\nif (!rawText || rawText.length < 50)\n  throw new Error(\"❌ The_Visual_Director column in Get row(s)6 is empty or invalid.\");\n\n// 2️⃣ Clean utility\nconst clean = (txt) => {\n  if (!txt) return \"\";\n  return txt\n    .replace(/[*_#]/g, \"\") // remove unwanted markdown\n    .replace(/\\s*Prompt\\s*\\d[:\\-]?\\s*/gi, \"\") // remove stray prompt labels\n    .replace(/(Narration[:\\-])\\s*/gi, \"\") // remove stray \"Narration:\"\n    .replace(/\\s*-- Style:.*/gi, \"\") // remove duplicate style suffixes\n    .replace(/\\n+/g, \" \")\n    .replace(/\\s+/g, \" \")\n    .trim();\n};\n\n// 3️⃣ Regex to extract Narration + 3 Prompts\nconst regex =\n  /Narration:\\s*([\\s\\S]*?)(?=Prompt\\s*1[:\\-])Prompt\\s*1[:\\-]?\\s*([\\s\\S]*?)(?=Prompt\\s*2[:\\-])Prompt\\s*2[:\\-]?\\s*([\\s\\S]*?)(?=Prompt\\s*3[:\\-])Prompt\\s*3[:\\-]?\\s*([\\s\\S]*?)(?=(?:\\n\\s*\\n|$))/gi;\n\n// 4️⃣ Extract and structure scenes\nconst scenes = [];\nlet match;\nlet sceneNumber = 1;\n\nwhile ((match = regex.exec(rawText)) !== null) {\n  const [_, narrationRaw, p1Raw, p2Raw, p3Raw] = match;\n  const narration = clean(narrationRaw);\n  const prompt1 = clean(p1Raw);\n  const prompt2 = clean(p2Raw);\n  const prompt3 = clean(p3Raw);\n\n  scenes.push({\n    sceneNumber: sceneNumber++,\n    totalScenes: 6,\n    narration,\n    prompt1: `${prompt1} ${GLOBAL_STYLE}`,\n    prompt2: `${prompt2} ${GLOBAL_STYLE}`,\n    prompt3: `${prompt3} ${GLOBAL_STYLE}`,\n  });\n}\n\n// 5️⃣ Limit to 6 scenes\nconst limitedScenes = scenes.slice(0, 6);\n\n// ✅ 6️⃣ Return structured JSON for n8n\nreturn limitedScenes.map((scene) => ({ json: scene }));"
+        "jsCode": "/**\n * 🎬 VISUAL DIRECTOR PARSER v11.0 — Unified Regex Build\n * ✅ Always reads from Get row(s)6 → The_Visual_Director\n * ✅ Extracts Narration + Prompts via a single regex\n * ✅ Cleans stray styles and labels safely\n * ✅ Limits total scenes to 10\n * ✅ Returns n8n-ready JSON array\n */\n\nconst GLOBAL_STYLE =\n  \"-- Style: Cinematic matte painting, emotional atmosphere, visible brushstrokes, impasto texture, warm candlelight glow, ultra-detailed, 8k, Indian setting, volumetric lighting --ar 16:9 --v 6.0\";\n\n// 1️⃣ Always read from Get row(s)6\nlet rawText = \"\";\ntry {\n  const src = $('Get row(s)6').first().json;\n  rawText = src?.The_Visual_Director || \"\";\n} catch (e) {\n  throw new Error(\"❌ Could not read Get row(s)6 → The_Visual_Director\");\n}\n\nif (!rawText || rawText.length < 50) {\n  throw new Error(\"❌ The_Visual_Director column in Get row(s)6 is empty or invalid.\");\n}\n\n// 🧩 DEBUG LOG: Print the first 500 characters of the raw text\nconsole.log(\"🪶 RawText Preview (first 500 chars):\", rawText.slice(0, 500));\n\n// 2️⃣ Clean utility\nconst clean = (txt) => {\n  if (!txt) return \"\";\n  return txt\n    .replace(/[*_#]/g, \"\") // remove unwanted markdown\n    .replace(/\\s*Prompt\\s*\\d[:\\-]?\\s*/gi, \"\") // remove stray prompt labels\n    .replace(/(Narration[:\\-])\\s*/gi, \"\") // remove stray \"Narration:\"\n    .replace(/\\s*-- Style:.*/gi, \"\") // remove duplicate style suffixes\n    .replace(/\\n+/g, \" \")\n    .replace(/\\s+/g, \" \")\n    .trim();\n};\n\n// 3️⃣ Regex to extract Narration + 3 Prompts\nconst regex =\n  /Narration:\\s*([\\s\\S]*?)(?=Prompt\\s*1[:\\-])Prompt\\s*1[:\\-]?\\s*([\\s\\S]*?)(?=Prompt\\s*2[:\\-])Prompt\\s*2[:\\-]?\\s*([\\s\\S]*?)(?=Prompt\\s*3[:\\-])Prompt\\s*3[:\\-]?\\s*([\\s\\S]*?)(?=(?:\\n\\s*\\n|$))/gi;\n\n// 4️⃣ Extract and structure scenes\nconst scenes = [];\nlet match;\nlet sceneNumber = 1;\n\nwhile ((match = regex.exec(rawText)) !== null) {\n  const [_, narrationRaw, p1Raw, p2Raw, p3Raw] = match;\n  const narration = clean(narrationRaw);\n  const prompt1 = clean(p1Raw);\n  const prompt2 = clean(p2Raw);\n  const prompt3 = clean(p3Raw);\n\n  scenes.push({\n    sceneNumber: sceneNumber++,\n    totalScenes: 10,\n    narration,\n    prompt1: `${prompt1} ${GLOBAL_STYLE}`,\n    prompt2: `${prompt2} ${GLOBAL_STYLE}`,\n    prompt3: `${prompt3} ${GLOBAL_STYLE}`,\n  });\n}\n\n// 5️⃣ Limit to 10 scenes\nconst limitedScenes = scenes.slice(0, 10);\n\n// ✅ 6️⃣ Return structured JSON for n8n\nreturn limitedScenes.map((scene) => ({ json: scene }));\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -3741,15 +3741,15 @@
           "headers": {
             "host": "n8n.tinysaas.fun",
             "user-agent": "Mozilla/5.0 (compatible; Google-Apps-Script; beanserver; +https://script.google.com; id: UAEmdDd8D-kIhjvG6SderBlKMT8WDTi5OX7o)",
-            "content-length": "368",
+            "content-length": "344",
             "accept-encoding": "gzip, deflate, br",
             "content-type": "application/json",
-            "x-forwarded-for": "34.116.21.33",
+            "x-forwarded-for": "107.178.192.12",
             "x-forwarded-host": "n8n.tinysaas.fun",
             "x-forwarded-port": "443",
             "x-forwarded-proto": "https",
             "x-forwarded-server": "be92d452a53d",
-            "x-real-ip": "34.116.21.33"
+            "x-real-ip": "107.178.192.12"
           },
           "params": {},
           "query": {},
@@ -3757,7 +3757,7 @@
             "idea": "राजा की जादुई पतंग",
             "status": "Go",
             "youtube_url": "",
-            "Start Time": "2026-01-14T03:55:53.000Z",
+            "Start Time": "",
             "End Time": "",
             "title_1": "",
             "title_2": "",
@@ -3769,7 +3769,7 @@
             "_meta": {
               "row": 9,
               "sheetName": "Story Prompt",
-              "editedAt": "2026-01-14T04:29:37.016Z",
+              "editedAt": "2026-01-16T04:46:11.697Z",
               "triggeredBy": "thakurg39@gmail.com"
             }
           },
@@ -4830,7 +4830,7 @@
     "executionOrder": "v1",
     "availableInMCP": false
   },
-  "versionId": "5e6f190c-3a17-4d88-b167-1b80705876ad",
+  "versionId": "d385383c-5145-48d1-8356-a3b1286f93b3",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "26999db1e681e6a87364716419329ff310f36bdcdb3a6fae594cdba3a86aed90"
