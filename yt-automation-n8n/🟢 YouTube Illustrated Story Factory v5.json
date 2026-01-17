@@ -118,7 +118,7 @@
             "Scene": "={{ $json.sceneNumber }}",
             "audioPublicUrl": "={{ $json.audioPublicUrl }}",
             "Narration": "={{ $('Loop Scenes').item.json.narration}}",
-            "story_id": "={{ $('Unified Folder Info').item.json.folderId }}"
+            "story_id": "={{(() => {\n  // Try to get all items from Unified Folder Info\n  const allItems = $('Unified Folder Info').all();\n  // If multiple items exist, pick the first one’s folderId\n  if (Array.isArray(allItems) && allItems.length > 0) {\n    return allItems[0].json.folderId;\n  }\n\n  // If single item output, fallback to .first()\n  const single = $('Unified Folder Info').first();\n  return single?.json.folderId ?? null;\n})()}}"
           },
           "matchingColumns": [],
           "schema": [
@@ -237,18 +237,18 @@
           "conditions": [
             {
               "keyName": "Scene",
-              "keyValue": "={{ $json.sceneNumber }}"
+              "keyValue": "={{ $('Build Image Payload').item.json.metadata.scene }}"
             }
           ]
         },
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
-            "Scene": "={{ $('Loop Scenes').item.json.sceneNumber }}",
+            "Scene": "={{ $('Build Image Payload').item.json.metadata.scene }}",
             "imagePublicUrl": "={{ $json.imagePublicUrl }}",
             "imagePublicUrl2": "={{ $json.imagePublicUrl2 }}",
             "imagePublicUrl3": "={{ $json.imagePublicUrl3 }}",
-            "story_id": "={{ $('Unified Folder Info').item.json.folderId }}"
+            "story_id": "={{ $('Build Image Payload').item.json.metadata.drive_folder_id }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -549,7 +549,7 @@
       "parameters": {
         "content": "## Story & Scene Generator",
         "height": 608,
-        "width": 3536
+        "width": 3312
       },
       "type": "n8n-nodes-base.stickyNote",
       "position": [
@@ -580,7 +580,7 @@
       "parameters": {
         "content": "## Telegram Notification & Controller",
         "height": 352,
-        "width": 3536,
+        "width": 3312,
         "color": 4
       },
       "type": "n8n-nodes-base.stickyNote",
@@ -703,36 +703,6 @@
       ],
       "id": "72c61c87-fcc5-498c-90a0-4d8ed36f98e7",
       "name": "Code in JavaScript3"
-    },
-    {
-      "parameters": {
-        "operation": "deleteRows",
-        "dataTableId": {
-          "__rl": true,
-          "value": "pjBqBAm7fEgW0Tbi",
-          "mode": "list",
-          "cachedResultName": "YT Automate - Final URLs",
-          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/pjBqBAm7fEgW0Tbi"
-        },
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "finalPublicUrl",
-              "condition": "isNotEmpty"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.dataTable",
-      "typeVersion": 1.1,
-      "position": [
-        1824,
-        1696
-      ],
-      "id": "252f1fe3-c0c5-4d0e-a6cf-6faf95af6e4b",
-      "name": "Delete row(s)3",
-      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -1268,7 +1238,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        -256,
+        64,
         1696
       ],
       "id": "737b6085-4b05-4c2b-a8a4-9d4a19ad6318",
@@ -1376,7 +1346,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        -448,
+        -128,
         1696
       ],
       "id": "23a81c48-b35b-4a78-b5b5-9c58b358c29f",
@@ -1416,7 +1386,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -624,
+        -352,
         1712
       ],
       "id": "4070c006-8b05-4150-ba70-3384c97756df",
@@ -1425,13 +1395,13 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=You are the Lead Producer for 'Gurukul Kahaniya'. \nTask: Take the idea: {{ $json.idea }} and create a 6-scene DETAILED PLOT.\n\nDo NOT write a summary. Write a \"Plot Expansion\" for each scene. \nExample: Instead of \"Riya meets a man,\" write \"Riya is walking through the dusty village square when she notices an old man sitting under a banyan tree, looking lost and clutching a wooden staff...\"\n\nThis gives the Screenwriter enough \"meat\" to write a long, emotional script.",
+        "text": "=You are the Lead Producer and Chief Storyteller for “Gurukul Kahaniya”, a Hindi story series that blends nostalgia, emotion, and imagination.\n\n🎯 Your task:\nTake the idea below and write a 6-scene *dramatic cinematic story outline* in Hindi.\n\nIdea: \"{{ $json.idea }}\"\n\n🎬 Story Requirements:\n1. The story MUST revolve around the given idea. \n2. It should emotionally connect with both children and adults. \n3. Tone: Warm, dramatic, and inspiring — like Pixar meets classic Hindi storytelling.\n4. Add light emotional twists, inner feelings, and visually rich imagery.\n5. Avoid generic summaries — show through detailed, cinematic narration.\n6. Each scene must move the story forward naturally.\n7. Keep the Hindi language simple yet expressive — something a 10-year-old can follow, but an adult can feel deeply.\n8. End with an emotional, uplifting, or thought-provoking conclusion.\n\n🧱 Format:\nScene 1\nNarration:\n(Write detailed, sensory-rich description)\n\nScene 2\nNarration:\n...\n\nContinue until Scene 6.\nDo NOT write scene titles, just \"Scene X\" and \"Narration:\"",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        -528,
+        -736,
         2032
       ],
       "id": "89f0fbd3-bf6f-42e3-ac62-e89598d55d42",
@@ -1442,7 +1412,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=You are a legendary Hindi Novelist and Screenwriter.\n\nTarget Language: {{ $('Set Variables').item.json.target_language }}\n\nTask:\nTake the storyboard from the Strategist and expand it into a DEEP, DESCRIPTIVE screenplay-style narrative\nfollowing the format below:\n\nFORMAT:\nScene 1\nNarration: [Descriptive text]\nScene 2\nNarration: [Descriptive text]\n...\nScene 10\nNarration: [Descriptive text]",
+        "text": "=You are a legendary Hindi Novelist and Screenwriter.\n\nTarget Language: {{ $('Set Variables').item.json.target_language }}\n\nTask:\nTake the storyboard from the Strategist and expand it into a DEEP, DESCRIPTIVE screenplay-style narrative\nfollowing the format below:\n\nFORMAT:\nScene 1\nNarration: [Descriptive text]\nScene 2\nNarration: [Descriptive text]\n...\nScene 10\nNarration: [Descriptive text]\n\nStoryboard: {{(() => {\n  const strategistNode = $('The Niche Strategist');\n  \n  // 🧩 Check if \"The Niche Strategist\" has executed\n  if (strategistNode.isExecuted) {\n    const strategistOutput = strategistNode.first()?.json?.The_Niche_Strategist;\n    if (strategistOutput) return strategistOutput; // ✅ Use AI result if available\n  }\n\n  // 🔄 Fallback to Data Table node if Strategist not executed\n  const dataTableNode = $('strategist').first();\n  return dataTableNode?.json?.The_Niche_Strategist ?? 'No strategist data found';\n})()}}",
         "options": {
           "systemMessage": "You are a professional Hindi novelist and screenwriter with mastery in cinematic storytelling.\n\nRules for scene generation:\n1. There must be exactly TEN scenes in total.\n2. Each scene must be labeled clearly as:\n   Scene 1\n   Narration:\n3. Each scene must contain 2–3 long descriptive paragraphs.\n4. Each paragraph should total about 80–120 words, for 200–300 words per scene.\n5. Focus on rich sensory description (smells, sounds, colors, internal emotion).\n6. Use natural conversational Hindi (\"Bol-chaal\" style) – not formal or robotic.\n7. Each scene continues the same story logically; do not restart or summarize.\n8. Scene 2 must include: \n   \"कहानी आगे बढ़ाने से पहले, मुझे कमेंट्स में बताएं कि आप यह कहानी किस शहर से सुन रहे हैं? आपके जवाब का इंतज़ार रहेगा।\"\n9. Continue generating until all ten scenes are complete."
         }
@@ -1450,7 +1420,7 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        208,
+        128,
         2032
       ],
       "id": "8bbc4c79-9347-47f6-bddd-4b1d43170827",
@@ -1553,8 +1523,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        2592,
-        1664
+        688,
+        1696
       ],
       "id": "534ba0da-26b1-4ee4-be84-a8b26de35df2",
       "name": "Set Variables"
@@ -1585,7 +1555,7 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        -64,
+        -144,
         2032
       ],
       "id": "9a1cb30d-669d-4bba-b3d2-7bf89bf5ea82",
@@ -1599,7 +1569,7 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        640,
+        704,
         2032
       ],
       "id": "f4a014ac-9b2f-4e2a-8c3b-4b5ff74e57b2",
@@ -1616,8 +1586,8 @@
       "type": "n8n-nodes-base.telegramTrigger",
       "typeVersion": 1.2,
       "position": [
-        -256,
-        1824
+        -352,
+        1888
       ],
       "id": "1fa807f3-70f6-40e5-bd5d-7d926f8cf591",
       "name": "Telegram Trigger",
@@ -1636,7 +1606,7 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        -64,
+        -144,
         2288
       ],
       "id": "ff2e067e-a76a-43af-86e7-6a1f550b99fb",
@@ -1658,7 +1628,7 @@
     },
     {
       "parameters": {
-        "jsCode": "/**\n * 🎬 VISUAL DIRECTOR PARSER v11.0 — Unified Regex Build\n * ✅ Always reads from Get row(s)6 → The_Visual_Director\n * ✅ Extracts Narration + Prompts via a single regex\n * ✅ Cleans stray styles and labels safely\n * ✅ Limits total scenes to 10\n * ✅ Returns n8n-ready JSON array\n */\n\nconst GLOBAL_STYLE =\n  \"-- Style: Cinematic matte painting, emotional atmosphere, visible brushstrokes, impasto texture, warm candlelight glow, ultra-detailed, 8k, Indian setting, volumetric lighting --ar 16:9 --v 6.0\";\n\n// 1️⃣ Always read from Get row(s)6\nlet rawText = \"\";\ntry {\n  const src = $('Get row(s)6').first().json;\n  rawText = src?.The_Visual_Director || \"\";\n} catch (e) {\n  throw new Error(\"❌ Could not read Get row(s)6 → The_Visual_Director\");\n}\n\nif (!rawText || rawText.length < 50) {\n  throw new Error(\"❌ The_Visual_Director column in Get row(s)6 is empty or invalid.\");\n}\n\n// 🧩 DEBUG LOG: Print the first 500 characters of the raw text\nconsole.log(\"🪶 RawText Preview (first 500 chars):\", rawText.slice(0, 500));\n\n// 2️⃣ Clean utility\nconst clean = (txt) => {\n  if (!txt) return \"\";\n  return txt\n    .replace(/[*_#]/g, \"\") // remove unwanted markdown\n    .replace(/\\s*Prompt\\s*\\d[:\\-]?\\s*/gi, \"\") // remove stray prompt labels\n    .replace(/(Narration[:\\-])\\s*/gi, \"\") // remove stray \"Narration:\"\n    .replace(/\\s*-- Style:.*/gi, \"\") // remove duplicate style suffixes\n    .replace(/\\n+/g, \" \")\n    .replace(/\\s+/g, \" \")\n    .trim();\n};\n\n// 3️⃣ Regex to extract Narration + 3 Prompts\nconst regex =\n  /Narration:\\s*([\\s\\S]*?)(?=Prompt\\s*1[:\\-])Prompt\\s*1[:\\-]?\\s*([\\s\\S]*?)(?=Prompt\\s*2[:\\-])Prompt\\s*2[:\\-]?\\s*([\\s\\S]*?)(?=Prompt\\s*3[:\\-])Prompt\\s*3[:\\-]?\\s*([\\s\\S]*?)(?=(?:\\n\\s*\\n|$))/gi;\n\n// 4️⃣ Extract and structure scenes\nconst scenes = [];\nlet match;\nlet sceneNumber = 1;\n\nwhile ((match = regex.exec(rawText)) !== null) {\n  const [_, narrationRaw, p1Raw, p2Raw, p3Raw] = match;\n  const narration = clean(narrationRaw);\n  const prompt1 = clean(p1Raw);\n  const prompt2 = clean(p2Raw);\n  const prompt3 = clean(p3Raw);\n\n  scenes.push({\n    sceneNumber: sceneNumber++,\n    totalScenes: 10,\n    narration,\n    prompt1: `${prompt1} ${GLOBAL_STYLE}`,\n    prompt2: `${prompt2} ${GLOBAL_STYLE}`,\n    prompt3: `${prompt3} ${GLOBAL_STYLE}`,\n  });\n}\n\n// 5️⃣ Limit to 10 scenes\nconst limitedScenes = scenes.slice(0, 10);\n\n// ✅ 6️⃣ Return structured JSON for n8n\nreturn limitedScenes.map((scene) => ({ json: scene }));\n"
+        "jsCode": "/**\n * 🎬 VISUAL DIRECTOR PARSER v11.1 — Dynamic Scene Count\n */\n\nconst GLOBAL_STYLE =\n  \"-- Style: Cinematic matte painting, emotional atmosphere, visible brushstrokes, impasto texture, warm candlelight glow, ultra-detailed, 8k, Indian setting, volumetric lighting --ar 16:9 --v 6.0\";\n\n// 1️⃣ Always read from Get row(s)6\nlet rawText = \"\";\ntry {\n  const src = $('Get row(s)6').first().json;\n  rawText = src?.The_Visual_Director || \"\";\n} catch (e) {\n  throw new Error(\"❌ Could not read Get row(s)6 → The_Visual_Director\");\n}\n\nif (!rawText || rawText.length < 50) {\n  throw new Error(\"❌ The_Visual_Director column in Get row(s)6 is empty or invalid.\");\n}\n\n// 🧩 DEBUG LOG\nconsole.log(\"🪶 RawText Preview (first 500 chars):\", rawText.slice(0, 500));\n\n\n// ================================\n// 🔁 NEW LOGIC: Dynamic Scene Count\n// ================================\n\n// 1️⃣ Split into Scenes (header-based)\nconst sceneHeaderRegex = /(?:#+|-+|=+)*\\s*Scene\\s*\\d+[:.*]*/gi;\n\nconst blocks = rawText\n  .split(sceneHeaderRegex)\n  .map(b => b.trim())\n  .filter(b => b.length > 20);\n\n// 2️⃣ Clean utility (UNCHANGED)\nconst clean = (txt) => {\n  if (!txt) return \"\";\n  return txt\n    .replace(/[*_#]/g, \"\")\n    .replace(/\\s*Prompt\\s*\\d[:\\-]?\\s*/gi, \"\")\n    .replace(/(Narration[:\\-])\\s*/gi, \"\")\n    .replace(/\\s*-- Style:.*/gi, \"\")\n    .replace(/\\n+/g, \" \")\n    .replace(/\\s+/g, \" \")\n    .trim();\n};\n\n// 3️⃣ Regex to extract Narration + 3 Prompts (UNCHANGED)\nconst regex =\n  /Narration:\\s*([\\s\\S]*?)(?=Prompt\\s*1[:\\-])Prompt\\s*1[:\\-]?\\s*([\\s\\S]*?)(?=Prompt\\s*2[:\\-])Prompt\\s*2[:\\-]?\\s*([\\s\\S]*?)(?=Prompt\\s*3[:\\-])Prompt\\s*3[:\\-]?\\s*([\\s\\S]*?)(?=(?:\\n\\s*\\n|$))/gi;\n\n// 🔁 Count scenes using the SAME regex that extracts them\nconst totalScenes = [...rawText.matchAll(regex)].length;\n\n// 4️⃣ Extract and structure scenes\nconst scenes = [];\nlet match;\nlet sceneNumber = 1;\n\nwhile ((match = regex.exec(rawText)) !== null) {\n  const [_, narrationRaw, p1Raw, p2Raw, p3Raw] = match;\n\n  scenes.push({\n    sceneNumber: sceneNumber++,\n    totalScenes, // ✅ dynamic\n    narration: clean(narrationRaw),\n    prompt1: `${clean(p1Raw)} ${GLOBAL_STYLE}`,\n    prompt2: `${clean(p2Raw)} ${GLOBAL_STYLE}`,\n    prompt3: `${clean(p3Raw)} ${GLOBAL_STYLE}`,\n  });\n}\n\n// 5️⃣ Return all scenes dynamically (NO LIMIT)\nreturn scenes.map(scene => ({ json: scene }));"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1697,8 +1667,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        -736,
-        2048
+        864,
+        1696
       ],
       "id": "b0d558fd-5ef4-4a08-b608-08dd39cfa933",
       "name": "If3"
@@ -1717,8 +1687,8 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        2416,
-        1664
+        464,
+        1696
       ],
       "id": "554d0ec1-cb8f-45bd-8907-ad3ef9c63a6d",
       "name": "Fetch Metadata",
@@ -1752,8 +1722,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        64,
-        2064
+        1360,
+        1712
       ],
       "id": "62241228-75d8-4f22-84ef-2842efb2faf1",
       "name": "If4"
@@ -1786,8 +1756,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        768,
-        2080
+        1600,
+        1728
       ],
       "id": "8bdaf55d-e211-4471-aec4-017f8f667ac5",
       "name": "If5"
@@ -1820,8 +1790,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1920,
-        2096
+        1824,
+        1744
       ],
       "id": "3549561d-5434-4f94-a0cc-4f0d82f714f4",
       "name": "If6"
@@ -1854,8 +1824,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2176,
-        2272
+        2016,
+        1760
       ],
       "id": "1f46e065-863f-452e-b1de-6bc6cd56d5e9",
       "name": "If7"
@@ -1888,8 +1858,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2432,
-        2288
+        2256,
+        1776
       ],
       "id": "1f43e51e-bba8-4282-9b80-c5f15ad94d85",
       "name": "If8"
@@ -2079,7 +2049,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        -224,
+        -368,
         2032
       ],
       "id": "0c7fa84a-aecc-480e-af67-aabee9ad3705",
@@ -2409,7 +2379,7 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        -224,
+        -368,
         2288
       ],
       "id": "b100767e-dcd8-408a-9ee2-57ceea858c79",
@@ -2806,231 +2776,6 @@
     },
     {
       "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "9ce5db07-a797-4f64-ab00-10d82c7afb17",
-              "leftValue": "={{ $('Initial URLs Check').all().length }}",
-              "rightValue": 6,
-              "operator": {
-                "type": "number",
-                "operation": "lt"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        208,
-        1696
-      ],
-      "id": "128d5b7a-30e5-44e8-94ec-9fd9b69ef254",
-      "name": "If9"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "9ce5db07-a797-4f64-ab00-10d82c7afb17",
-              "leftValue": "={{ $('Final URLs Check').all().length }}",
-              "rightValue": 6,
-              "operator": {
-                "type": "number",
-                "operation": "lt"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        640,
-        1680
-      ],
-      "id": "5cbc7243-6591-4668-9b39-225609aa0413",
-      "name": "If10"
-    },
-    {
-      "parameters": {
-        "tableId": "yt_automate_initial_urls",
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "story_id",
-              "fieldValue": "={{ $json.story_id }}"
-            },
-            {
-              "fieldId": "scene",
-              "fieldValue": "={{ $json.Scene }}"
-            },
-            {
-              "fieldId": "audiopublicurl",
-              "fieldValue": "={{ $json.audioPublicUrl }}"
-            },
-            {
-              "fieldId": "imagepublicurl1",
-              "fieldValue": "={{ $json.imagePublicUrl }}"
-            },
-            {
-              "fieldId": "imagepublicurl2",
-              "fieldValue": "={{ $json.imagePublicUrl2 }}"
-            },
-            {
-              "fieldId": "imagepublicurl3",
-              "fieldValue": "={{ $json.imagePublicUrl3 }}"
-            },
-            {
-              "fieldId": "narration",
-              "fieldValue": "={{ $json.Narration }}"
-            },
-            {
-              "fieldId": "createdat",
-              "fieldValue": "={{ $json.createdAt }}"
-            },
-            {
-              "fieldId": "updatedat",
-              "fieldValue": "={{ $json.updatedAt }}"
-            }
-          ]
-        }
-      },
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        432,
-        1840
-      ],
-      "id": "14582e95-2f49-483d-8a4c-bbab4404016e",
-      "name": "Create a row",
-      "credentials": {
-        "supabaseApi": {
-          "id": "QWe5gQQ2CsygOBLj",
-          "name": "Info@sambhavtech - YT - Gurukul"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "tableId": "yt_automate_final_urls",
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "story_id",
-              "fieldValue": "={{ $('Final URLs Check').item.json.story_id }}"
-            },
-            {
-              "fieldId": "finalPublicUrl",
-              "fieldValue": "={{ $('Final URLs Check').item.json.finalPublicUrl }}"
-            },
-            {
-              "fieldId": "createdat",
-              "fieldValue": "={{ $('Final URLs Check').item.json.createdAt }}"
-            },
-            {
-              "fieldId": "updatedat",
-              "fieldValue": "={{ $('Final URLs Check').item.json.updatedAt }}"
-            },
-            {
-              "fieldId": "idea",
-              "fieldValue": "={{ $json.idea }}"
-            },
-            {
-              "fieldId": "The_Narrative_Screenwriter",
-              "fieldValue": "={{ $json.The_Narrative_Screenwriter }}"
-            },
-            {
-              "fieldId": "Character_Designer",
-              "fieldValue": "={{ $json.Character_Designer }}"
-            },
-            {
-              "fieldId": "The_Visual_Director",
-              "fieldValue": "={{ $json.The_Visual_Director }}"
-            },
-            {
-              "fieldId": "Mood_Analyzer",
-              "fieldValue": "={{ $json.Mood_Analyzer }}"
-            },
-            {
-              "fieldId": "SEO_Architect",
-              "fieldValue": "={{ $json.SEO_Architect }}"
-            },
-            {
-              "fieldId": "The_Niche_Strategist",
-              "fieldValue": "={{ $json.The_Niche_Strategist }}"
-            },
-            {
-              "fieldId": "scene",
-              "fieldValue": "={{ $('Final URLs Check').item.json.Scene }}"
-            }
-          ]
-        }
-      },
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
-      "position": [
-        1600,
-        1696
-      ],
-      "id": "a24b1ecc-c47f-4641-a367-7aaa02d4b903",
-      "name": "Create a row1",
-      "credentials": {
-        "supabaseApi": {
-          "id": "QWe5gQQ2CsygOBLj",
-          "name": "Info@sambhavtech - YT - Gurukul"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "get",
-        "dataTableId": {
-          "__rl": true,
-          "value": "r7uoOpmWnpj5QIrY",
-          "mode": "list",
-          "cachedResultName": "YT Automate - Metadata",
-          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/r7uoOpmWnpj5QIrY"
-        },
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "idea",
-              "keyValue": "={{ $('Update row in sheet1').item.json.idea }}"
-            }
-          ]
-        }
-      },
-      "type": "n8n-nodes-base.dataTable",
-      "typeVersion": 1.1,
-      "position": [
-        1360,
-        1696
-      ],
-      "id": "6474d590-c760-4f28-972b-de8fd2e2c965",
-      "name": "Get row(s)2",
-      "onError": "continueRegularOutput"
-    },
-    {
-      "parameters": {
         "operation": "get",
         "dataTableId": {
           "__rl": true,
@@ -3051,40 +2796,11 @@
       "type": "n8n-nodes-base.dataTable",
       "typeVersion": 1.1,
       "position": [
-        -16,
+        256,
         1696
       ],
       "id": "5520b509-7ea2-433e-8977-56e7c10033dd",
       "name": "Initial URLs Check",
-      "alwaysOutputData": true
-    },
-    {
-      "parameters": {
-        "operation": "get",
-        "dataTableId": {
-          "__rl": true,
-          "value": "pjBqBAm7fEgW0Tbi",
-          "mode": "list",
-          "cachedResultName": "YT Automate - Final URLs",
-          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/pjBqBAm7fEgW0Tbi"
-        },
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "story_id",
-              "condition": "isNotEmpty"
-            }
-          ]
-        }
-      },
-      "type": "n8n-nodes-base.dataTable",
-      "typeVersion": 1.1,
-      "position": [
-        432,
-        1680
-      ],
-      "id": "bc623d68-04c8-429b-b6b2-400de86cdef2",
-      "name": "Final URLs Check",
       "alwaysOutputData": true
     },
     {
@@ -3161,35 +2877,6 @@
     },
     {
       "parameters": {
-        "operation": "deleteRows",
-        "dataTableId": {
-          "__rl": true,
-          "value": "r7uoOpmWnpj5QIrY",
-          "mode": "list",
-          "cachedResultName": "YT Automate - Metadata",
-          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/r7uoOpmWnpj5QIrY"
-        },
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "idea",
-              "keyValue": "={{ $('Update row in sheet1').item.json.idea }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.dataTable",
-      "typeVersion": 1.1,
-      "position": [
-        2416,
-        1840
-      ],
-      "id": "21f23e1f-8f2e-49be-a18e-ba960a35ee01",
-      "name": "Delete row(s)"
-    },
-    {
-      "parameters": {
         "httpMethod": "POST",
         "path": "sheet-edit",
         "options": {}
@@ -3197,8 +2884,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -464,
-        1824
+        -736,
+        1712
       ],
       "id": "3465e76f-eb3b-41b5-a450-e5816b1ba896",
       "name": "Webhook",
@@ -3225,7 +2912,7 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        -784,
+        -528,
         1712
       ],
       "id": "ad3c4daf-33d9-4bd8-a09a-e6b6cb981ade",
@@ -3244,7 +2931,7 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        -528,
+        -736,
         2192
       ],
       "id": "04130787-0135-44d9-a9f2-a998bdb511ea",
@@ -3267,8 +2954,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        224,
-        2192
+        128,
+        2176
       ],
       "id": "dffc321d-8159-469a-afc4-ef73b0721bcd",
       "name": "Google Gemini Chat Model2",
@@ -3303,394 +2990,6 @@
           "name": "OpenAi account"
         }
       }
-    },
-    {
-      "parameters": {
-        "operation": "deleteRows",
-        "dataTableId": {
-          "__rl": true,
-          "value": "BS3cU6fl4xJz5Z2o",
-          "mode": "list",
-          "cachedResultName": "YT Automate - Initial URLs",
-          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/BS3cU6fl4xJz5Z2o"
-        },
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "Scene",
-              "condition": "isNotEmpty"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.dataTable",
-      "typeVersion": 1.1,
-      "position": [
-        640,
-        1840
-      ],
-      "id": "c3fa6eda-6a19-4042-ad40-7aa5865ebdbc",
-      "name": "Delete Initial URLs",
-      "alwaysOutputData": true
-    },
-    {
-      "parameters": {
-        "dataTableId": {
-          "__rl": true,
-          "value": "BS3cU6fl4xJz5Z2o",
-          "mode": "list",
-          "cachedResultName": "YT Automate - Initial URLs",
-          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/BS3cU6fl4xJz5Z2o"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "Scene": "={{ $json.Scene }}"
-          },
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "Scene",
-              "displayName": "Scene",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "number",
-              "readOnly": false,
-              "removed": false
-            },
-            {
-              "id": "audioPublicUrl",
-              "displayName": "audioPublicUrl",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "imagePublicUrl",
-              "displayName": "imagePublicUrl",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "imagePublicUrl2",
-              "displayName": "imagePublicUrl2",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "imagePublicUrl3",
-              "displayName": "imagePublicUrl3",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "Narration",
-              "displayName": "Narration",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "story_id",
-              "displayName": "story_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.dataTable",
-      "typeVersion": 1.1,
-      "position": [
-        1152,
-        1840
-      ],
-      "id": "5915dba6-63c2-4523-b8b3-6ecde6ada221",
-      "name": "Insert row1"
-    },
-    {
-      "parameters": {
-        "jsCode": "// Output 6 separate items\nreturn [1, 2, 3, 4, 5, 6].map(i => ({\n  json: {\n    Scene: i\n  }\n}));"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        880,
-        1840
-      ],
-      "id": "279def3d-8145-41d7-939a-1b330eb1b8be",
-      "name": "SceneData"
-    },
-    {
-      "parameters": {
-        "dataTableId": {
-          "__rl": true,
-          "value": "BS3cU6fl4xJz5Z2o",
-          "mode": "list",
-          "cachedResultName": "YT Automate - Initial URLs",
-          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/BS3cU6fl4xJz5Z2o"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "Scene": "={{ $json.Scene }}"
-          },
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "Scene",
-              "displayName": "Scene",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "number",
-              "readOnly": false,
-              "removed": false
-            },
-            {
-              "id": "audioPublicUrl",
-              "displayName": "audioPublicUrl",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "imagePublicUrl",
-              "displayName": "imagePublicUrl",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "imagePublicUrl2",
-              "displayName": "imagePublicUrl2",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "imagePublicUrl3",
-              "displayName": "imagePublicUrl3",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "Narration",
-              "displayName": "Narration",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "story_id",
-              "displayName": "story_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.dataTable",
-      "typeVersion": 1.1,
-      "position": [
-        2256,
-        1840
-      ],
-      "id": "1cefb8c5-65dd-4286-b0e4-e7551e742e48",
-      "name": "Insert row2"
-    },
-    {
-      "parameters": {
-        "jsCode": "// Output 6 separate items\nreturn [1, 2, 3, 4, 5, 6].map(i => ({\n  json: {\n    Scene: i\n  }\n}));"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        2080,
-        1696
-      ],
-      "id": "69934dce-6fe4-4305-9bf2-2ec7beff12d2",
-      "name": "SceneData2"
-    },
-    {
-      "parameters": {
-        "operation": "deleteRows",
-        "dataTableId": {
-          "__rl": true,
-          "value": "r7uoOpmWnpj5QIrY",
-          "mode": "list",
-          "cachedResultName": "YT Automate - Metadata",
-          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/r7uoOpmWnpj5QIrY"
-        },
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "idea",
-              "keyValue": "={{ $('Update row in sheet1').item.json.idea }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.dataTable",
-      "typeVersion": 1.1,
-      "position": [
-        1600,
-        1840
-      ],
-      "id": "1a8db1fc-2367-4b48-9866-aa9584a62960",
-      "name": "Delete row(s)1"
-    },
-    {
-      "parameters": {
-        "dataTableId": {
-          "__rl": true,
-          "value": "BS3cU6fl4xJz5Z2o",
-          "mode": "list",
-          "cachedResultName": "YT Automate - Initial URLs",
-          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/BS3cU6fl4xJz5Z2o"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "Scene": "={{ $('SceneData').item.json.Scene }}"
-          },
-          "matchingColumns": [],
-          "schema": [
-            {
-              "id": "Scene",
-              "displayName": "Scene",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "number",
-              "readOnly": false,
-              "removed": false
-            },
-            {
-              "id": "audioPublicUrl",
-              "displayName": "audioPublicUrl",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "imagePublicUrl",
-              "displayName": "imagePublicUrl",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "imagePublicUrl2",
-              "displayName": "imagePublicUrl2",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "imagePublicUrl3",
-              "displayName": "imagePublicUrl3",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "Narration",
-              "displayName": "Narration",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "story_id",
-              "displayName": "story_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.dataTable",
-      "typeVersion": 1.1,
-      "position": [
-        1360,
-        1840
-      ],
-      "id": "df1f3221-561d-41d9-b319-64314b55e406",
-      "name": "Insert row3"
     },
     {
       "parameters": {
@@ -3732,6 +3031,34 @@
       ],
       "id": "c484217a-6a9f-4d19-865d-d95f838f0f80",
       "name": "Build Image Payload"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "r7uoOpmWnpj5QIrY",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Metadata",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/r7uoOpmWnpj5QIrY"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idea",
+              "keyValue": "={{ $('Update row in sheet1').item.json.idea }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        1712
+      ],
+      "id": "0983f594-08a4-455c-a526-72ae40bb3e5b",
+      "name": "strategist"
     }
   ],
   "pinData": {
@@ -3741,23 +3068,23 @@
           "headers": {
             "host": "n8n.tinysaas.fun",
             "user-agent": "Mozilla/5.0 (compatible; Google-Apps-Script; beanserver; +https://script.google.com; id: UAEmdDd8D-kIhjvG6SderBlKMT8WDTi5OX7o)",
-            "content-length": "344",
+            "content-length": "361",
             "accept-encoding": "gzip, deflate, br",
             "content-type": "application/json",
-            "x-forwarded-for": "107.178.192.12",
+            "x-forwarded-for": "34.116.21.33",
             "x-forwarded-host": "n8n.tinysaas.fun",
             "x-forwarded-port": "443",
             "x-forwarded-proto": "https",
             "x-forwarded-server": "be92d452a53d",
-            "x-real-ip": "107.178.192.12"
+            "x-real-ip": "34.116.21.33"
           },
           "params": {},
           "query": {},
           "body": {
-            "idea": "राजा की जादुई पतंग",
+            "idea": "एक वक़्त की रोटी ",
             "status": "Go",
             "youtube_url": "",
-            "Start Time": "",
+            "Start Time": "2026-01-16T17:18:15.000Z",
             "End Time": "",
             "title_1": "",
             "title_2": "",
@@ -3767,9 +3094,9 @@
             "thumbnail_hook": "",
             "thumbnal_link": "",
             "_meta": {
-              "row": 9,
+              "row": 10,
               "sheetName": "Story Prompt",
-              "editedAt": "2026-01-16T04:46:11.697Z",
+              "editedAt": "2026-01-16T17:28:22.927Z",
               "triggeredBy": "thakurg39@gmail.com"
             }
           },
@@ -3978,17 +3305,6 @@
         [
           {
             "node": "HTTP Request2",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Delete row(s)3": {
-      "main": [
-        [
-          {
-            "node": "SceneData2",
             "type": "main",
             "index": 0
           }
@@ -4259,7 +3575,7 @@
         ],
         [
           {
-            "node": "If4",
+            "node": "strategist",
             "type": "main",
             "index": 0
           }
@@ -4535,91 +3851,11 @@
         ]
       ]
     },
-    "If9": {
-      "main": [
-        [
-          {
-            "node": "Final URLs Check",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Create a row",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "If10": {
-      "main": [
-        [
-          {
-            "node": "Fetch Metadata",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Get row(s)2",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Create a row": {
-      "main": [
-        [
-          {
-            "node": "Delete Initial URLs",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Create a row1": {
-      "main": [
-        [
-          {
-            "node": "Delete row(s)3",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Get row(s)2": {
-      "main": [
-        [
-          {
-            "node": "Create a row1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Initial URLs Check": {
       "main": [
         [
           {
-            "node": "If9",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Final URLs Check": {
-      "main": [
-        [
-          {
-            "node": "If10",
+            "node": "Fetch Metadata",
             "type": "main",
             "index": 0
           }
@@ -4654,17 +3890,6 @@
           {
             "node": "The Visual Director",
             "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Delete row(s)": {
-      "main": [
-        [
-          {
-            "node": "Fetch Metadata",
-            "type": "main",
             "index": 0
           }
         ]
@@ -4725,83 +3950,6 @@
         ]
       ]
     },
-    "Delete Initial URLs": {
-      "main": [
-        [
-          {
-            "node": "SceneData",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Insert row1": {
-      "main": [
-        [
-          {
-            "node": "Insert row3",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "SceneData": {
-      "main": [
-        [
-          {
-            "node": "Insert row1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Insert row2": {
-      "main": [
-        [
-          {
-            "node": "Delete row(s)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "SceneData2": {
-      "main": [
-        [
-          {
-            "node": "Insert row2",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Insert row3": {
-      "main": [
-        [
-          {
-            "node": "Delete row(s)1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Delete row(s)1": {
-      "main": [
-        [
-          {
-            "node": "Final URLs Check",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Get row(s)7": {
       "main": [
         [
@@ -4823,6 +3971,17 @@
           }
         ]
       ]
+    },
+    "strategist": {
+      "main": [
+        [
+          {
+            "node": "If4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -4830,7 +3989,7 @@
     "executionOrder": "v1",
     "availableInMCP": false
   },
-  "versionId": "d385383c-5145-48d1-8356-a3b1286f93b3",
+  "versionId": "df10dfac-9f86-475f-9c2d-383c3b3d4487",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "26999db1e681e6a87364716419329ff310f36bdcdb3a6fae594cdba3a86aed90"
