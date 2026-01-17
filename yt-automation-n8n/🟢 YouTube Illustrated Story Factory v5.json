@@ -40,7 +40,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        1840,
+        2064,
         3056
       ],
       "id": "1c341fbb-e1f8-4eb3-b67a-96f783003941",
@@ -53,14 +53,14 @@
         "sendBody": true,
         "contentType": "raw",
         "rawContentType": "application/json",
-        "body": "={{ JSON.stringify({\n  text: ($node[\"Loop Scenes\"].json.narration || \"\").replace(/\\[.*?\\]/g, \"\").trim(),\n  prompt: $('Set Variables').item.json.tts_prompt || \"Say the following like you are narrating a story\",\n  voice_config: {\n    languageCode: $('Set Variables').item.json.tts_languageCode || \"en-us\",\n    name: $('Set Variables').item.json.tts_voice_name || \"Kore\",\n    model_name: $('Set Variables').item.json.tts_model_name || \"gemini-2.5-flash-tts\"\n  },\n  metadata: {\n    scene: $node[\"Loop Scenes\"].json.sceneNumber || \"1\",\n    drive_folder_id: $('Unified Folder Info').item.json.folderId,\n    tts_provider: $('Set Variables').item.json.tts_provider\n  }\n}) }}",
+        "body": "={{ $json }}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.3,
       "position": [
-        1584,
-        2896
+        1792,
+        2928
       ],
       "id": "9fe889e8-698a-4e67-b56a-892fe1b27341",
       "name": "Subflow: Google TTS"
@@ -723,7 +723,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=Analyze the following story: {{\n(() => {\n  try {\n    // Prefer live Narrative Screenwriter output\n    if ($('The Narrative Screenwriter').isExecuted && $('The Narrative Screenwriter').item.json.output) {\n      return $('The Narrative Screenwriter').item.json.output;\n    }\n    // Fallback: fetch from Data Table (if Screenwriter skipped)\n    const table = $if($('Get row(s)').isExecuted, $('Get row(s)').item.json, {});\n    return table['The_Narrative_Screenwriter'] || table['output'] || 'No story available.';\n  } catch (e) {\n    return 'No story available.';\n  }\n})()\n}}\n\nMain Character Visual Bible: {{\n(() => {\n  try {\n    // Prefer live Character Designer output\n    if ($('Character Designer').isExecuted && $('Character Designer').item.json.output) {\n      return $('Character Designer').item.json.output;\n    }\n    // Fallback: fetch from Data Table (if Character Designer skipped)\n    const table = $if($('Get row(s)').isExecuted, $('Get row(s)').item.json, {});\n    return table['Character_Designer'] || table['output'] || 'No visual data found.';\n  } catch (e) {\n    return 'No visual data found.';\n  }\n})()\n}}\n\nYou are a Viral YouTube Growth Expert. Generate a high-CTR SEO package.\n\nReturn ONLY a clean JSON object with these keys:\n\n1. \"titles\": Create 3 viral, high-emotion Hindi titles. Use the 'Curiosity Gap' method.\n\n2. \"description\": A 2-line emotional summary in Hindi including 'Shiksha' and keywords.\n\n3. \"tags\": 15 trending tags.\n\n4. \"thumbnail_hook\": A highly detailed \"Nano Banana\" prompt. Follow these strict rules for Python-ready composition:\n   - START: \"A wide-angle 16:9 cinematic matte painting poster, 8k resolution.\"\n   - ART STYLE: \"Impasto texture, heavy brushstrokes, warm candlelight glow, Indian setting, emotional atmosphere.\"\n   - COMPOSITION: \"Rule of Thirds. Massive close-up of the character (from Visual Bible) on the FAR LEFT. The character should be looking towards the right with an expression of shock.\"\n   - THE BLANK SPACE RULE: \"The entire right 50% of the image MUST be a simple, beautifully blurred, dark background (negative space). Do NOT include any text, letters, or words in the image. Leave this area as a clean blank canvas for text placement.\"\n   - LIGHTING: \"Dramatic rim lighting on the character, making them pop from the dark right-side background.\"\n\nReturn ONLY the JSON. No other text.\n",
+        "text": "=Analyze the following story: {{\n(() => {\n  try {\n    // Prefer live Narrative Screenwriter output\n    if ($('The Narrative Screenwriter').isExecuted && $('The Narrative Screenwriter').item.json.output) {\n      return $('The Narrative Screenwriter').item.json.output;\n    }\n    // Fallback: fetch from Data Table (if Screenwriter skipped)\n    const table = $if($('Get row(s)').isExecuted, $('Get row(s)').item.json, {});\n    return table['The_Narrative_Screenwriter'] || table['output'] || 'No story available.';\n  } catch (e) {\n    return 'No story available.';\n  }\n})()\n}}\n\nMain Character Visual Bible: {{\n(() => {\n  try {\n    // Prefer live Character Designer output\n    if ($('Character Designer').isExecuted && $('Character Designer').item.json.output) {\n      return $('Character Designer').item.json.output;\n    }\n    // Fallback: fetch from Data Table (if Character Designer skipped)\n    const table = $if($('Get row(s)').isExecuted, $('Get row(s)').item.json, {});\n    return table['Character_Designer'] || table['output'] || 'No visual data found.';\n  } catch (e) {\n    return 'No visual data found.';\n  }\n})()\n}}\n\nYou are a Viral YouTube SEO and Growth Expert specializing in Indian storytelling and emotional short films.\n\nAssume this story is a Hindi cinematic YouTube video aimed at emotional engagement and viewer retention.\n\nGenerate a **high-CTR SEO package** optimized for Hindi + English discoverability.\n\nReturn **only** a clean minified JSON object with these keys:\n\n1. **titles** – Create 3 viral Hindi titles using the “Curiosity Gap” method. Each should convey high emotional appeal (e.g. sacrifice, nostalgia, hope, love).\n\n2. **description** – Write a 2-line Hindi YouTube description including the keyword “Shiksha” and 2–3 related keywords naturally.\n\n3. **tags** – Generate 15 trending YouTube tags combining Hindi and Romanized English keywords for maximum reach (e.g. \"एक वक्त की रोटी\", \"Ek Vaqt Ki Roti\", \"Indian short film\", \"emotional story\").\n\n4. **thumbnail_hook** – Create a vivid “Nano Banana” thumbnail description following these rules:\n   - START: “A wide-angle cinematic matte painting in 16:9, 8K resolution.”\n   - ART STYLE: “Impasto texture, heavy brushstrokes, warm candlelight glow, Indian setting, emotional atmosphere.”\n   - COMPOSITION: “Rule of Thirds; the main character (from Visual Bible) appears on the far left, looking right with a shocked expression.”\n   - NEGATIVE SPACE: “The right 50% of the frame is softly blurred dark background (no text, just negative space).”\n   - LIGHTING: “Dramatic rim lighting highlighting the face from the left side.”\n\nReturn ONLY a valid minified JSON response. No explanations, no markdown.\n",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
@@ -1412,7 +1412,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=You are a legendary Hindi Novelist and Screenwriter.\n\nTarget Language: {{ $('Set Variables').item.json.target_language }}\n\nTask:\nTake the storyboard from the Strategist and expand it into a DEEP, DESCRIPTIVE screenplay-style narrative\nfollowing the format below:\n\nFORMAT:\nScene 1\nNarration: [Descriptive text]\nScene 2\nNarration: [Descriptive text]\n...\nScene 10\nNarration: [Descriptive text]\n\nStoryboard: {{(() => {\n  const strategistNode = $('The Niche Strategist');\n  \n  // 🧩 Check if \"The Niche Strategist\" has executed\n  if (strategistNode.isExecuted) {\n    const strategistOutput = strategistNode.first()?.json?.The_Niche_Strategist;\n    if (strategistOutput) return strategistOutput; // ✅ Use AI result if available\n  }\n\n  // 🔄 Fallback to Data Table node if Strategist not executed\n  const dataTableNode = $('strategist').first();\n  return dataTableNode?.json?.The_Niche_Strategist ?? 'No strategist data found';\n})()}}",
+        "text": "=You are a legendary Hindi Novelist and Screenwriter.\n\nTarget Language: {{ $('Set Variables').item.json.target_language }}\n\nTask:\nTake the storyboard from the Strategist and expand it into a DEEP, DESCRIPTIVE screenplay-style narrative\nfollowing the format below:\n\nFORMAT:\nScene 1\nNarration: [Descriptive text]\nScene 2\nNarration: [Descriptive text]\n...\nScene 10\nNarration: [Descriptive text]\n\nStoryboard: {{(() => {\n  try {\n    // 1️⃣ Check \"The Niche Strategist\" (AI node) first\n    const nicheNode = $('The Niche Strategist');\n    if (nicheNode?.isExecuted) {\n      const nicheOutput = nicheNode.first()?.json?.output || nicheNode.first()?.json?.The_Niche_Strategist;\n      if (nicheOutput && nicheOutput.length > 20) return nicheOutput;\n    }\n\n    // 2️⃣ Fallback → \"strategist\" (Data Table node)\n    const strategistNode = $('strategist');\n    if (strategistNode?.isExecuted) {\n      const strategistOutput = strategistNode.first()?.json?.The_Niche_Strategist;\n      if (strategistOutput && strategistOutput.length > 20) return strategistOutput;\n    }\n\n    // 3️⃣ If neither has data\n    return '⚠️ No strategist data found.';\n  } catch (e) {\n    return `⚠️ Error: ${e.message}`;\n  }\n})()}}",
         "options": {
           "systemMessage": "You are a professional Hindi novelist and screenwriter with mastery in cinematic storytelling.\n\nRules for scene generation:\n1. There must be exactly TEN scenes in total.\n2. Each scene must be labeled clearly as:\n   Scene 1\n   Narration:\n3. Each scene must contain 2–3 long descriptive paragraphs.\n4. Each paragraph should total about 80–120 words, for 200–300 words per scene.\n5. Focus on rich sensory description (smells, sounds, colors, internal emotion).\n6. Use natural conversational Hindi (\"Bol-chaal\" style) – not formal or robotic.\n7. Each scene continues the same story logically; do not restart or summarize.\n8. Scene 2 must include: \n   \"कहानी आगे बढ़ाने से पहले, मुझे कमेंट्स में बताएं कि आप यह कहानी किस शहर से सुन रहे हैं? आपके जवाब का इंतज़ार रहेगा।\"\n9. Continue generating until all ten scenes are complete."
         }
@@ -1420,7 +1420,7 @@
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        128,
+        144,
         2032
       ],
       "id": "8bbc4c79-9347-47f6-bddd-4b1d43170827",
@@ -3059,56 +3059,22 @@
       ],
       "id": "0983f594-08a4-455c-a526-72ae40bb3e5b",
       "name": "strategist"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ✅ Safely access all required nodes\nconst scene = $node[\"Loop Scenes\"]?.json || {};\nconst folderId = $node[\"Unified Folder Info\"]?.json?.folderId || \"\";\nconst setVar = $node[\"Set Variables\"]?.json || {};\n\nreturn {\n  json: {\n    // 🧩 Clean up narration text (remove [annotations] etc.)\n    text: (scene.narration || \"\").replace(/\\[.*?\\]/g, \"\").trim(),\n\n    // 🗣️ Default voice prompt if not set\n    prompt: setVar.tts_prompt || \"Say the following like you are narrating a story\",\n\n    // 🎙️ Voice configuration (Google / Gemini / ElevenLabs etc.)\n    voice_config: {\n      languageCode: setVar.tts_languageCode || \"en-us\",\n      name: setVar.tts_voice_name || \"Kore\",\n      model_name: setVar.tts_model_name || \"gemini-2.5-flash-tts\",\n    },\n\n    // 🗂️ Metadata for organization or file tagging\n    metadata: {\n      scene: scene.sceneNumber || 0,\n      drive_folder_id: scene.folderId || folderId,\n      tts_provider: setVar.tts_provider || \"gemini\", // fallback if missing\n    },\n  },\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1584,
+        2928
+      ],
+      "id": "251a817c-2eba-4a29-8fb7-03ff668a876a",
+      "name": "Build TTS Payload"
     }
   ],
-  "pinData": {
-    "Webhook": [
-      {
-        "json": {
-          "headers": {
-            "host": "n8n.tinysaas.fun",
-            "user-agent": "Mozilla/5.0 (compatible; Google-Apps-Script; beanserver; +https://script.google.com; id: UAEmdDd8D-kIhjvG6SderBlKMT8WDTi5OX7o)",
-            "content-length": "361",
-            "accept-encoding": "gzip, deflate, br",
-            "content-type": "application/json",
-            "x-forwarded-for": "34.116.21.33",
-            "x-forwarded-host": "n8n.tinysaas.fun",
-            "x-forwarded-port": "443",
-            "x-forwarded-proto": "https",
-            "x-forwarded-server": "be92d452a53d",
-            "x-real-ip": "34.116.21.33"
-          },
-          "params": {},
-          "query": {},
-          "body": {
-            "idea": "एक वक़्त की रोटी ",
-            "status": "Go",
-            "youtube_url": "",
-            "Start Time": "2026-01-16T17:18:15.000Z",
-            "End Time": "",
-            "title_1": "",
-            "title_2": "",
-            "title_3": "",
-            "description": "",
-            "tags": "",
-            "thumbnail_hook": "",
-            "thumbnal_link": "",
-            "_meta": {
-              "row": 10,
-              "sheetName": "Story Prompt",
-              "editedAt": "2026-01-16T17:28:22.927Z",
-              "triggeredBy": "thakurg39@gmail.com"
-            }
-          },
-          "webhookUrl": "https://n8n.tinysaas.fun/webhook/sheet-edit",
-          "executionMode": "production"
-        },
-        "pairedItem": {
-          "item": 0
-        }
-      }
-    ]
-  },
+  "pinData": {},
   "connections": {
     "Character Designer": {
       "main": [
@@ -3694,7 +3660,7 @@
       "main": [
         [
           {
-            "node": "Subflow: Google TTS",
+            "node": "Build TTS Payload",
             "type": "main",
             "index": 0
           }
@@ -3982,6 +3948,17 @@
           }
         ]
       ]
+    },
+    "Build TTS Payload": {
+      "main": [
+        [
+          {
+            "node": "Subflow: Google TTS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -3989,7 +3966,7 @@
     "executionOrder": "v1",
     "availableInMCP": false
   },
-  "versionId": "df10dfac-9f86-475f-9c2d-383c3b3d4487",
+  "versionId": "b822bb6d-7f68-4d80-afe5-96255e989fb9",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "26999db1e681e6a87364716419329ff310f36bdcdb3a6fae594cdba3a86aed90"

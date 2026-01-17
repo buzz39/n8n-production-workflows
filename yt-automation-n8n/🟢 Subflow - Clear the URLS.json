@@ -1,0 +1,448 @@
+{
+  "name": "🟢 Subflow - Clear the URLS",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "clear-uls",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        -272
+      ],
+      "id": "04d80840-f210-4338-8206-db54a130a28b",
+      "name": "Webhook",
+      "webhookId": "db743ab5-0c36-4536-9790-4e076cedd9e8"
+    },
+    {
+      "parameters": {
+        "operation": "deleteRows",
+        "dataTableId": {
+          "__rl": true,
+          "value": "BS3cU6fl4xJz5Z2o",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Initial URLs",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/BS3cU6fl4xJz5Z2o"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "Scene",
+              "condition": "isNotEmpty"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        -176
+      ],
+      "id": "07d51874-2e61-4a96-a88c-d8ffb967030a",
+      "name": "Delete Initial URLs",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "BS3cU6fl4xJz5Z2o",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Initial URLs",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/BS3cU6fl4xJz5Z2o"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "story_id",
+              "condition": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        -176
+      ],
+      "id": "40e9a4ca-b2fa-4f06-941a-6639d3400c30",
+      "name": "Initial URLs Check",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "deleteRows",
+        "dataTableId": {
+          "__rl": true,
+          "value": "r7uoOpmWnpj5QIrY",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Metadata",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/r7uoOpmWnpj5QIrY"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "idea",
+              "condition": "isNotEmpty"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1792,
+        -176
+      ],
+      "id": "40a28d47-7379-45ea-9298-0c2acac3fb60",
+      "name": "Delete Metadata"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "pjBqBAm7fEgW0Tbi",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Final URLs",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/pjBqBAm7fEgW0Tbi"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "story_id",
+              "condition": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        -176
+      ],
+      "id": "1adcfd1b-95fb-4217-9a1d-cffb4c61b6af",
+      "name": "Final URLs Check",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "r7uoOpmWnpj5QIrY",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Metadata",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/r7uoOpmWnpj5QIrY"
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        -176
+      ],
+      "id": "c5d16526-4367-43e7-ac85-c75456c0b929",
+      "name": "Fetch Metadata",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "tableId": "yt_automate_initial_urls",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "story_id",
+              "fieldValue": "={{ $json.story_id }}"
+            },
+            {
+              "fieldId": "scene",
+              "fieldValue": "={{ $json.Scene }}"
+            },
+            {
+              "fieldId": "audiopublicurl",
+              "fieldValue": "={{ $json.audioPublicUrl }}"
+            },
+            {
+              "fieldId": "imagepublicurl1",
+              "fieldValue": "={{ $json.imagePublicUrl }}"
+            },
+            {
+              "fieldId": "imagepublicurl2",
+              "fieldValue": "={{ $json.imagePublicUrl2 }}"
+            },
+            {
+              "fieldId": "imagepublicurl3",
+              "fieldValue": "={{ $json.imagePublicUrl3 }}"
+            },
+            {
+              "fieldId": "narration",
+              "fieldValue": "={{ $json.Narration }}"
+            },
+            {
+              "fieldId": "createdat",
+              "fieldValue": "={{ $json.createdAt }}"
+            },
+            {
+              "fieldId": "updatedat",
+              "fieldValue": "={{ $json.updatedAt }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        448,
+        -176
+      ],
+      "id": "802d9032-3611-4d2d-8fe8-520cda66b6ae",
+      "name": "Update Initial URLs",
+      "credentials": {
+        "supabaseApi": {
+          "id": "QWe5gQQ2CsygOBLj",
+          "name": "Info@sambhavtech - YT - Gurukul"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "yt_automate_final_urls",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "story_id",
+              "fieldValue": "={{ $('Final URLs Check').item.json.story_id }}"
+            },
+            {
+              "fieldId": "finalPublicUrl",
+              "fieldValue": "={{ $('Final URLs Check').item.json.finalPublicUrl }}"
+            },
+            {
+              "fieldId": "createdat",
+              "fieldValue": "={{ $('Final URLs Check').item.json.createdAt }}"
+            },
+            {
+              "fieldId": "updatedat",
+              "fieldValue": "={{ $('Final URLs Check').item.json.updatedAt }}"
+            },
+            {
+              "fieldId": "idea",
+              "fieldValue": "={{ $json.idea }}"
+            },
+            {
+              "fieldId": "The_Narrative_Screenwriter",
+              "fieldValue": "={{ $json.The_Narrative_Screenwriter }}"
+            },
+            {
+              "fieldId": "Character_Designer",
+              "fieldValue": "={{ $json.Character_Designer }}"
+            },
+            {
+              "fieldId": "The_Visual_Director",
+              "fieldValue": "={{ $json.The_Visual_Director }}"
+            },
+            {
+              "fieldId": "Mood_Analyzer",
+              "fieldValue": "={{ $json.Mood_Analyzer }}"
+            },
+            {
+              "fieldId": "SEO_Architect",
+              "fieldValue": "={{ $json.SEO_Architect }}"
+            },
+            {
+              "fieldId": "The_Niche_Strategist",
+              "fieldValue": "={{ $json.The_Niche_Strategist }}"
+            },
+            {
+              "fieldId": "scene",
+              "fieldValue": "={{ $('Final URLs Check').item.json.Scene }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1344,
+        -176
+      ],
+      "id": "075f8f5b-7a00-4750-bd1a-2d792e6c39da",
+      "name": "Update Fina URLs",
+      "credentials": {
+        "supabaseApi": {
+          "id": "QWe5gQQ2CsygOBLj",
+          "name": "Info@sambhavtech - YT - Gurukul"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "deleteRows",
+        "dataTableId": {
+          "__rl": true,
+          "value": "pjBqBAm7fEgW0Tbi",
+          "mode": "list",
+          "cachedResultName": "YT Automate - Final URLs",
+          "cachedResultUrl": "/projects/5vjC7U0oHRviXQkd/datatables/pjBqBAm7fEgW0Tbi"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "finalPublicUrl",
+              "condition": "isNotEmpty"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1568,
+        -176
+      ],
+      "id": "da3e04d8-88c3-405a-9414-63bb52be1b65",
+      "name": "Delete Final URLs",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -80
+      ],
+      "id": "f29047b2-20ba-4099-aad9-ea894993b957",
+      "name": "When clicking ‘Execute workflow’"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Delete Initial URLs": {
+      "main": [
+        [
+          {
+            "node": "Fetch Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Initial URLs Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Initial URLs Check": {
+      "main": [
+        [
+          {
+            "node": "Update Initial URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Metadata": {
+      "main": [
+        []
+      ]
+    },
+    "Fetch Metadata": {
+      "main": [
+        [
+          {
+            "node": "Final URLs Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Final URLs Check": {
+      "main": [
+        [
+          {
+            "node": "Update Fina URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Initial URLs": {
+      "main": [
+        [
+          {
+            "node": "Delete Initial URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Fina URLs": {
+      "main": [
+        [
+          {
+            "node": "Delete Final URLs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete Final URLs": {
+      "main": [
+        [
+          {
+            "node": "Delete Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Initial URLs Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "11742321-81ae-491e-81d0-7617aab7b8a0",
+  "meta": {
+    "instanceId": "26999db1e681e6a87364716419329ff310f36bdcdb3a6fae594cdba3a86aed90"
+  },
+  "id": "xpkW94YPnGIwNT-JUueTg",
+  "tags": []
+}
